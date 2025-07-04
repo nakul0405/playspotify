@@ -1,4 +1,9 @@
-from telegram.ext import Updater, CommandHandler from config import BOT_TOKEN import requests, json from friends import get_friends_activity from store import save_sp_dc_token, get_sp_dc_token
+from telegram.ext import Updater, CommandHandler
+from config import BOT_TOKEN
+import requests
+import json
+from friends import get_friends_activity
+from store import save_sp_dc_token, get_sp_dc_token
 
 TOKENS_FILE = "tokens.json"
 
