@@ -3,7 +3,7 @@ import requests, json, urllib.parse
 from datetime import datetime, timedelta
 from config import SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI
 
-application = Flask(__name__)
+app = Flask(__name__)
 TOKENS_FILE = "tokens.json"
 
 def save_token(user_id, data, display_name, spotify_id):
@@ -65,3 +65,6 @@ def callback():
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8080)
+    
+    application = app
+
