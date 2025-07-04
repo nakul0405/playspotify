@@ -1,24 +1,32 @@
-# store.py
 import json
+import os
 
-STORE_FILE = "sp_dc_tokens.json"
+COOKIES_FILE = "cookies.json"
 
 def save_sp_dc_token(user_id, token):
     try:
-        with open(STORE_FILE, "r") as f:
-            data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        data = {}
+        if os.path.exists(COOKIES_FILE):
+            with open(COOKIES_FILE, "r") as f:
+                cookies = json.load(f)
+        else:
+            cookies = {}
 
-    data[user_id] = token
+        cookies[user_id] = token
 
-    with open(STORE_FILE, "w") as f:
-        json.dump(data, f, indent=4)
+        with open(COOKIES_FILE, "w") as f:
+            json.dump(cookies, f, indent=4)
+    except Exception as e:
+        print("Error saving token:", e)
 
 def get_sp_dc_token(user_id):
     try:
-        with open(STORE_FILE, "r") as f:
-            data = json.load(f)
-        return data.get(user_id)
-    except:
+        if not os.path.exists(COOKIES_FILE):
+            return None
+
+        with open(COOKIES_FILE, "r") as f:
+            cookies = json.load(f)
+
+        return cookies.get(user_id)
+    except Exception as e:
+        print("Error reading token:", e)
         return None
