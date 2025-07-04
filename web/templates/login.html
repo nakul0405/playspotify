@@ -1,41 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Spotify Auto Login</title>
+  <title>Spotify Login</title>
+  <script src="/static/script.js" defer></script>
 </head>
 <body>
   <h2>🎧 Login to Spotify</h2>
-  <p>Click the button below to log in and sync your account.</p>
-
-  <button onclick="openLogin()">🔐 Login with Spotify</button>
-
-  <script>
-    function openLogin() {
-      const win = window.open("https://accounts.spotify.com/en/login", "_blank");
-
-      // Start checking for cookies after a delay
-      setTimeout(checkCookie, 5000);
-    }
-
-    function checkCookie() {
-      const cookies = document.cookie.split(';');
-      const spdc = cookies.find(c => c.trim().startsWith("sp_dc="));
-      if (spdc) {
-        const value = spdc.split("=")[1];
-        const user_id = new URLSearchParams(window.location.search).get("user_id");
-        if (user_id && value) {
-          fetch("/save_spdc", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_id, sp_dc: value })
-          }).then(() => {
-            document.body.innerHTML = "<h2>✅ Done! You can return to Telegram.</h2>";
-          });
-        }
-      } else {
-        setTimeout(checkCookie, 2000);
-      }
-    }
-  </script>
+  <p>Click the button below to securely login to Spotify.</p>
+  <button id="login-btn">🔐 Login with Spotify</button>
+  <p id="status" style="margin-top: 20px;"></p>
 </body>
 </html>
