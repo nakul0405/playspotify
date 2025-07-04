@@ -1,5 +1,6 @@
 import json
 import requests
+import asyncio
 from telegram import Update
 from telegram.ext import Application, ApplicationBuilder, CommandHandler, ContextTypes
 from config import BOT_TOKEN, OWNER_ID
@@ -117,5 +118,4 @@ async def main():
     await app.run_polling()
 
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(main())
