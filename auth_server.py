@@ -57,29 +57,29 @@ def callback():
 
     try:
         r = requests.post("https://accounts.spotify.com/api/token", data=token_data)
-        if r.status_code != 200:
-            return f"❌ Failed to fetch token: {r.text}", 500
-
         data = r.json()
+    except Exception as e:
+        return f"❌ Error while getting token: {str(e)} | Raw: {r.text}", 500
+
+    if "access_token" not in data:
+        return f"❌ Invalid token response from Spotify: {data}", 500
+
+    try:
         headers = {"Authorization": f"Bearer {data['access_token']}"}
         profile = requests.get("https://api.spotify.com/v1/me", headers=headers).json()
-
-        save_token(user_id, data, profile.get("display_name", "Unknown"), profile["id"])
-
-        # ✅ Telegram confirmation
-        bot = telegram.Bot(token=BOT_TOKEN)
-        bot.send_message(
-            chat_id=user_id,
-            text=f"✅ Spotify connected successfully for {profile.get('display_name', 'Spotify User')}!"
-        )
-
-        return "✅ Spotify login successful! You can return to Telegram."
-
     except Exception as e:
-        return f"🔥 Internal Server Error: {str(e)}", 500
+        return f"❌ Failed to fetch user profile: {str(e)}", 500
+
+    try:
+        save_token(user_id, data, profile.get("display_name", "Unknown"), profile["id"])
+        bot = telegram.Bot(token=BOT_TOKEN)
+        bot.send_message(chat_id=user_id, text=f"✅ Spotify connected successfully for {profile.get('display_name', 'Spotify User')}!")
+    except Exception as e:
+        return f"❌ Failed to save or send message: {str(e)}", 500
+
+    return "✅ Spotify login successful! You can return to Telegram."
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8080)
 
-# For Render
 application = app
