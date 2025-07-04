@@ -29,7 +29,7 @@ def home():
     return "✅ Spotify OAuth Server Running"
 
 @app.route('/login')
-def login():
+def spotify_login():
     user_id = request.args.get('user_id')
     scope = "user-read-currently-playing user-read-recently-played user-top-read"
     encoded_redirect_uri = urllib.parse.quote(SPOTIFY_REDIRECT_URI, safe='')
