@@ -9,7 +9,7 @@ def start(update, context):
 
 def login(update, context):
     user_id = str(update.effective_user.id)
-    login_url = f"https://playspotify.onrender.com/login?user_id={user_id}nUse Login Now" 
+    login_url = f"https://playspotify.onrender.com/login?user_id={user_id}" 
     update.message.reply_text(f"🔗 Click here to log in with Spotify:\n{login_url}")
 
 def logout(update, context):
