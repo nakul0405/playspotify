@@ -1,4 +1,4 @@
-python-telegram-bot==20.7
 Flask==3.0.0
+spotipy==2.25.1
 requests
-spotipy
+python-telegram-bot==20.7
