@@ -1,25 +1,19 @@
-import json
-import requests
-import asyncio
-from telegram import Update
-from telegram.ext import Application, ApplicationBuilder, CommandHandler, ContextTypes
-from config import BOT_TOKEN, OWNER_ID
+from telegram.ext import Updater, CommandHandler
+from config import BOT_TOKEN
+import requests, json
 
 TOKENS_FILE = "tokens.json"
 
-# ----------- BOT COMMANDS -----------
+def start(update, context):
+    update.message.reply_text("👋 Welcome to Gramify!\nUse /login to connect your Spotify account.")
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("👋 Welcome to Gramify!\nUse /login to connect your Spotify account.")
-
-async def login(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def login(update, context):
     user_id = str(update.effective_user.id)
     login_url = f"https://playspotify.onrender.com/login?user_id={user_id}"
-    await update.message.reply_text(f"🔗 Click here to log in with Spotify:\n{login_url}")
+    update.message.reply_text(f"🔗 Click here to log in with Spotify:\n{login_url}")
 
-async def logout(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def logout(update, context):
     user_id = str(update.effective_user.id)
-
     try:
         with open(TOKENS_FILE, "r") as f:
             tokens = json.load(f)
@@ -30,92 +24,49 @@ async def logout(update: Update, context: ContextTypes.DEFAULT_TYPE):
         del tokens[user_id]
         with open(TOKENS_FILE, "w") as f:
             json.dump(tokens, f, indent=4)
-        await update.message.reply_text("✅ Successfully logged out from Spotify.")
+        update.message.reply_text("✅ Successfully logged out.")
     else:
-        await update.message.reply_text("⚠️ You are not logged in.")
+        update.message.reply_text("⚠️ You are not logged in.")
 
-async def onlyforadmin(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    if user_id != OWNER_ID:
-        await update.message.reply_text("⛔ You are not authorized to use this command.")
-        return
-
-    try:
-        with open(TOKENS_FILE, "r") as f:
-            tokens = json.load(f)
-    except FileNotFoundError:
-        tokens = {}
-
-    if not tokens:
-        await update.message.reply_text("❌ No one has logged in yet.")
-        return
-
-    msg = "👑 Admin View: Logged-in Users\n\n"
-    for uid, info in tokens.items():
-        name = info.get("display_name", "Unknown")
-        msg += f"• {name} (ID: {uid})\n"
-
-    await update.message.reply_text(msg)
-
-async def activeusers(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def mytrack(update, context):
     user_id = str(update.effective_user.id)
-
-    try:
-        with open(TOKENS_FILE, "r") as f:
-            tokens = json.load(f)
-    except FileNotFoundError:
-        tokens = {}
-
-    if user_id in tokens:
-        await update.message.reply_text("✅ You are logged in with Spotify!")
-    else:
-        await update.message.reply_text("❌ You are not logged in yet.")
-
-async def mytrack(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = str(update.effective_user.id)
-
     try:
         with open(TOKENS_FILE, "r") as f:
             tokens = json.load(f)
         token = tokens[user_id]["access_token"]
     except:
-        await update.message.reply_text("⚠️ You are not logged in. Use /login first.")
+        update.message.reply_text("⚠️ You are not logged in.")
         return
 
-    headers = {
-        "Authorization": f"Bearer {token}"
-    }
+    headers = { "Authorization": f"Bearer {token}" }
     r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
 
     if r.status_code == 204:
-        await update.message.reply_text("⏸ You are not playing anything right now.")
+        update.message.reply_text("⏸ You are not playing anything.")
         return
 
     data = r.json()
-    item = data.get("item")
-
-    if not item:
-        await update.message.reply_text("⚠️ Could not fetch current track.")
+    track = data.get("item")
+    if not track:
+        update.message.reply_text("⚠️ Couldn't fetch track.")
         return
 
-    name = item["name"]
-    artists = ", ".join([artist["name"] for artist in item["artists"]])
-    await update.message.reply_text(f"🎵 {name} by {artists}")
+    name = track["name"]
+    artists = ", ".join([a["name"] for a in track["artists"]])
+    update.message.reply_text(f"🎵 {name} by {artists}")
 
-# ----------- START BOT -----------
+def main():
+    updater = Updater(BOT_TOKEN, use_context=True)
+    dp = updater.dispatcher
 
-async def main():
-    app: Application = ApplicationBuilder().token(BOT_TOKEN).build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("login", login))
-    app.add_handler(CommandHandler("logout", logout))
-    app.add_handler(CommandHandler("onlyforadmin", onlyforadmin))
-    app.add_handler(CommandHandler("activeusers", activeusers))
-    app.add_handler(CommandHandler("mytrack", mytrack))
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("login", login))
+    dp.add_handler(CommandHandler("logout", logout))
+    dp.add_handler(CommandHandler("mytrack", mytrack))
 
     print("🤖 Bot is running...")
-    await app.run_polling()
+    updater.start_polling()
+    updater.idle()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
