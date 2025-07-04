@@ -18,7 +18,7 @@ def start(update, context):
 
 def login(update, context):
     user_id = str(update.effective_user.id)
-    login_url = f"https://your-domain.com/autologin?user_id={user_id}"  # replace with your real domain
+    login_url = f"https://https://playspotify.onrender.com/autologin?user_id={user_id}"  # replace with your real domain
     update.message.reply_text(
         f"[🔗 Click here to log in with Spotify]({login_url})", parse_mode="Markdown"
     )
