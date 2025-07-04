@@ -18,6 +18,7 @@ async def login(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def logout(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
+
     try:
         with open(TOKENS_FILE, "r") as f:
             tokens = json.load(f)
@@ -57,6 +58,7 @@ async def onlyforadmin(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def activeusers(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
+
     try:
         with open(TOKENS_FILE, "r") as f:
             tokens = json.load(f)
@@ -79,30 +81,29 @@ async def mytrack(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⚠️ You are not logged in. Use /login first.")
         return
 
-    headers = {"Authorization": f"Bearer {token}"}
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
     r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
 
     if r.status_code == 204:
         await update.message.reply_text("⏸ You are not playing anything right now.")
         return
 
-    try:
-        data = r.json()
-        item = data.get("item")
-        if not item:
-            await update.message.reply_text("⚠️ Could not fetch current track.")
-            return
+    data = r.json()
+    item = data.get("item")
 
-        name = item["name"]
-        artists = ", ".join([artist["name"] for artist in item["artists"]])
-        await update.message.reply_text(f"🎧 Now Playing: *{name}* by _{artists}_", parse_mode="Markdown")
+    if not item:
+        await update.message.reply_text("⚠️ Could not fetch current track.")
+        return
 
-    except Exception as e:
-        await update.message.reply_text(f"❌ Error getting track: {str(e)}")
+    name = item["name"]
+    artists = ", ".join([artist["name"] for artist in item["artists"]])
+    await update.message.reply_text(f"🎵 {name} by {artists}")
 
-# ----------- APP RUNNER -----------
+# ----------- START BOT -----------
 
-if __name__ == '__main__':
+async def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
@@ -113,4 +114,9 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler("mytrack", mytrack))
 
     print("🤖 Bot is running...")
-    app.run_polling()
+    await app.run_polling()
+
+# Python 3.7+ compatible entry point
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())
