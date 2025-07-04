@@ -5,12 +5,15 @@ import requests, json
 TOKENS_FILE = "tokens.json"
 
 def start(update, context):
-    update.message.reply_text("👋 Welcome to playspotify created by @Nakulrathod0405!\nUse /login to connect your Spotify account.")
+    update.message.reply_text(
+        "👋 Welcome to playspotify created by @Nakulrathod0405!\nUse /login to connect your Spotify account."
+    )
 
 def login(update, context):
     user_id = str(update.effective_user.id)
-    login_url = f"https://playspotify.onrender.com/login?user_id={user_id}" 
-    update.message.reply_text(f"🔗 Click here to log in with Spotify:\n{login_url}")
+    login_url = f"https://playspotify.onrender.com/login?user_id={user_id}"
+    text = f"🔗 [Click here to log in with Spotify]({login_url})"
+    update.message.reply_text(text, parse_mode="Markdown")
 
 def logout(update, context):
     user_id = str(update.effective_user.id)
@@ -38,22 +41,28 @@ def mytrack(update, context):
         update.message.reply_text("⚠️ You are not logged in.")
         return
 
-    headers = { "Authorization": f"Bearer {token}" }
+    headers = {"Authorization": f"Bearer {token}"}
     r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
 
-    if r.status_code == 204:
+    if r.status_code == 204 or r.status_code == 202:
         update.message.reply_text("⏸ You are not playing anything.")
         return
 
-    data = r.json()
-    track = data.get("item")
-    if not track:
-        update.message.reply_text("⚠️ Couldn't fetch track.")
-        return
+    try:
+        data = r.json()
+        track = data.get("item")
+        if not track:
+            update.message.reply_text("⚠️ Couldn't fetch track.")
+            return
 
-    name = track["name"]
-    artists = ", ".join([a["name"] for a in track["artists"]])
-    update.message.reply_text(f"🎵 {name} by {artists}")
+        name = track["name"]
+        artists = ", ".join([a["name"] for a in track["artists"]])
+        url = track["external_urls"]["spotify"]
+        update.message.reply_text(f"🎵 [{name} - {artists}]({url})", parse_mode="Markdown")
+
+    except Exception as e:
+        update.message.reply_text("⚠️ Error fetching track.")
+        print(e)
 
 def main():
     updater = Updater(BOT_TOKEN, use_context=True)
