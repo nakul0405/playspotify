@@ -1,27 +1,23 @@
-Dockerfile for PlaySpotify Telegram Bot
-
+# Use official lightweight Python image
 FROM python:3.10-slim
 
-Set working directory
+# Prevent Python from writing .pyc files and buffering logs
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
+# Set working directory
 WORKDIR /app
 
-Install system dependencies
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
 
-RUN apt-get update && 
-apt-get install -y --no-install-recommends gcc && 
-apt-get clean && 
-rm -rf /var/lib/apt/lists/*
-
-Copy all files
-
+# Copy entire project
 COPY . .
 
-Install Python dependencies
+# Give execution permission to start.sh (if needed)
+RUN chmod +x start.sh
 
-RUN pip install --no-cache-dir -r requirements.txt
-
-Run the bot
-
-CMD ["python", "bot.py"]
-
+# Start the bot using bash script
+CMD ["bash", "start.sh"]
