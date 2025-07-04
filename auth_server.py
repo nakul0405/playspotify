@@ -35,18 +35,15 @@ def spotify_login():
     encoded_redirect_uri = urllib.parse.quote(SPOTIFY_REDIRECT_URI, safe='')
 
 @app.route('/login')
-def login():
+def spotify_login():
     user_id = request.args.get('user_id')
-    scope = "user-read-currently-playing user-read-recently-played user-top-read"
-    print("SPOTIFY_CLIENT_ID:", SPOTIFY_CLIENT_ID)
-print("SPOTIFY_REDIRECT_URI:", SPOTIFY_REDIRECT_URI)
-    auth_url = "https://accounts.spotify.com/authorize?" + urllib.parse.urlencode({
-        "client_id": SPOTIFY_CLIENT_ID,
-        "response_type": "code",
-        "redirect_uri": SPOTIFY_REDIRECT_URI,
-        "scope": scope,
-        "state": user_id
-    })
+        auth_url = "https://accounts.spotify.com/authorize?" + urllib.parse.urlencode({
+            "client_id": SPOTIFY_CLIENT_ID,
+            "response_type": "code",
+            "redirect_uri": SPOTIFY_REDIRECT_URI,
+            "scope": scope,
+            "state": user_id
+        })
     return redirect(auth_url)
 
 @app.route('/callback')
