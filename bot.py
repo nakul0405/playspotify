@@ -1,6 +1,7 @@
 from telegram.ext import Updater, CommandHandler
 from config import BOT_TOKEN
-import requests, json
+import requests
+import json
 from friends import get_friends_activity
 from store import save_sp_dc_token, get_sp_dc_token
 
@@ -11,13 +12,13 @@ def start(update, context):
     welcome_text = (
         "🎿 *Welcome to PlaySpotify by Nakul!*\n\n"
         "Track what your friends are listening to — see all the things your Spotify doesn’t have!\n\n"
-        "This bot connects with your Spotify account and shows:\n"
+        "*This bot connects with your Spotify account and shows:*\n"
         "✅ Friends' Live Activity\n"
         "✅ Song details (title, artist, album, time)\n"
         "✅ Your listening activity\n\n"
         "To get started, tap the button below to log in with your Spotify account 👇\n\n"
         "🔐 /login – Connect your Spotify account securely\n\n"
-        "Made with ❤️ by @Nakulrathod0405"
+        "_Made with ❤️ by @Nakulrathod0405_"
     )
     update.message.reply_text(welcome_text, parse_mode="Markdown")
 
@@ -42,16 +43,14 @@ def setcookie(update, context):
 def friends(update, context):
     user_id = str(update.effective_user.id)
     token = get_sp_dc_token(user_id)
+
     if not token:
         update.message.reply_text("⚠️ Please set your Spotify login cookie using /setcookie command first.")
         return
 
     try:
         activity = get_friends_activity(token)
-        if not activity:
-            update.message.reply_text("😕 No active friends found.")
-        else:
-            update.message.reply_text(activity, parse_mode="Markdown")
+        update.message.reply_text(activity, parse_mode="Markdown")
     except Exception as e:
         print(e)
         update.message.reply_text("❌ Failed to fetch friends activity. Make sure your cookie is valid.")
@@ -59,6 +58,7 @@ def friends(update, context):
 # /logout command
 def logout(update, context):
     user_id = str(update.effective_user.id)
+
     try:
         with open(TOKENS_FILE, "r") as f:
             tokens = json.load(f)
@@ -76,6 +76,7 @@ def logout(update, context):
 # /mytrack command
 def mytrack(update, context):
     user_id = str(update.effective_user.id)
+
     try:
         with open(TOKENS_FILE, "r") as f:
             tokens = json.load(f)
@@ -102,11 +103,12 @@ def mytrack(update, context):
         artists = ", ".join([a["name"] for a in track["artists"]])
         url = track["external_urls"]["spotify"]
         update.message.reply_text(f"🎵 [{name} - {artists}]({url})", parse_mode="Markdown")
+
     except Exception as e:
         update.message.reply_text("⚠️ Error fetching track.")
         print(e)
 
-# Main bot runner
+# Run the bot
 def main():
     updater = Updater(BOT_TOKEN, use_context=True)
     dp = updater.dispatcher
