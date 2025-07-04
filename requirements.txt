@@ -1,4 +1,4 @@
-Flask==3.0.0
-spotipy==2.25.1
-requests
 python-telegram-bot==13.15
+Flask
+spotipy
+requests
