@@ -1,38 +1,43 @@
-friends.py
-
 import requests
+import json
 
-def get_friends_activity(sp_dc_cookie): headers = { "Cookie": f"sp_dc={sp_dc_cookie}", "User-Agent": "Spotify/8.6.0 (iPhone; iOS 14.4; Scale/2.00)", "App-platform": "iOS", }
-
-response = requests.get(
-    "https://guc-spclient.spotify.com/presence-view/v1/buddylist",
-    headers=headers,
-    timeout=10
-)
-
-if response.status_code != 200:
-    raise Exception(f"Spotify API returned status {response.status_code}")
-
-data = response.json()
-if not data.get("friends"):
-    return None
-
-result = "\ud83c\udfb5 *Your Friends' Spotify Activity:*\n\n"
-for friend in data["friends"]:
+def get_friends_activity(sp_dc_token):
     try:
-        user = friend.get("user", {})
-        name = user.get("name") or user.get("uri")
-        track = friend.get("track")
-        if not track:
-            continue
+        cookies = {
+            "sp_dc": sp_dc_token
+        }
 
-        song = track.get("name")
-        artist = track.get("artist", {}).get("name")
-        uri = track.get("link")
+        headers = {
+            "User-Agent": "Spotify/8.6.72 Android/29 (Xiaomi Redmi Note 10)",
+        }
 
-        result += f"*{name}* is listening to \n[{song} - {artist}]({uri})\n\n"
-    except:
-        continue
+        response = requests.get("https://guc-spclient.spotify.com/presence-view/v1/buddylist", headers=headers, cookies=cookies)
 
-return result.strip()
+        if response.status_code != 200:
+            return "❌ Failed to fetch friends activity (invalid or expired cookie)."
 
+        data = response.json()
+        friends = data.get("friends", [])
+
+        if not friends:
+            return "😕 No friends are currently active."
+
+        message = "🎧 *Your Friends' Spotify Activity:*\n\n"
+        for friend in friends:
+            name = friend.get("user", {}).get("name", "Unknown")
+            track = friend.get("track", {})
+            if not track:
+                continue
+
+            song_name = track.get("name")
+            artist_name = ", ".join([a.get("name") for a in track.get("artist", [])])
+            album_name = track.get("album", {}).get("name")
+            track_url = track.get("link")
+
+            message += f"👤 *{name}*\n🎵 [{song_name} - {artist_name}]({track_url})\n💽 {album_name}\n\n"
+
+        return message.strip()
+
+    except Exception as e:
+        print(e)
+        return "⚠️ Error occurred while fetching friends activity."
