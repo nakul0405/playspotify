@@ -1,7 +1,7 @@
 import json
 import requests
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import Application, ApplicationBuilder, CommandHandler, ContextTypes
 from config import BOT_TOKEN, OWNER_ID
 
 TOKENS_FILE = "tokens.json"
@@ -104,7 +104,7 @@ async def mytrack(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ----------- START BOT -----------
 
 async def main():
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    app: Application = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("login", login))
@@ -116,7 +116,6 @@ async def main():
     print("🤖 Bot is running...")
     await app.run_polling()
 
-# Python 3.7+ compatible entry point
 if __name__ == "__main__":
     import asyncio
     asyncio.run(main())
