@@ -64,12 +64,18 @@ def callback():
     if "access_token" not in data:
         return f"❌ Invalid token response from Spotify: {data}", 500
 
+    # ✅ NEW: Fetch user profile with error-safe JSON parsing
     try:
         headers = {"Authorization": f"Bearer {data['access_token']}"}
-        profile = requests.get("https://api.spotify.com/v1/me", headers=headers).json()
+        response = requests.get("https://api.spotify.com/v1/me", headers=headers)
+        try:
+            profile = response.json()
+        except ValueError:
+            return f"❌ Spotify API returned non-JSON response: {response.text}", 500
     except Exception as e:
         return f"❌ Failed to fetch user profile: {str(e)}", 500
 
+    # ✅ Final save + Telegram notify
     try:
         save_token(user_id, data, profile.get("display_name", "Unknown"), profile["id"])
         bot = telegram.Bot(token=BOT_TOKEN)
