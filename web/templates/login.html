@@ -1,11 +1,42 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Login with Spotify</title>
-  <script src="/static/script.js" defer></script>
+  <title>Spotify Auto Login</title>
+  <script>
+    // Step 1: Open Spotify login in a new tab
+    function openLogin() {
+      const win = window.open("https://accounts.spotify.com/en/login", "_blank");
+    }
+
+    // Step 2: After delay, try to grab cookies
+    function checkCookie() {
+      const cookies = document.cookie.split(';');
+      const spdc = cookies.find(c => c.trim().startsWith("sp_dc="));
+      if (spdc) {
+        const value = spdc.split("=")[1];
+        const user_id = new URLSearchParams(window.location.search).get("user_id");
+        if (user_id && value) {
+          fetch("/save_spdc", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id, sp_dc: value })
+          }).then(() => {
+            document.body.innerHTML = "<h2>✅ Done! You can return to Telegram.</h2>";
+          });
+        }
+      } else {
+        setTimeout(checkCookie, 2000); // retry after 2 sec
+      }
+    }
+
+    window.onload = () => {
+      openLogin();         // open Spotify login in new tab
+      setTimeout(checkCookie, 5000);  // wait then try grab cookie
+    }
+  </script>
 </head>
 <body>
-  <h2>Login to Spotify</h2>
-  <iframe src="https://accounts.spotify.com/en/login" width="100%" height="600px"></iframe>
+  <h2>Waiting for Spotify login...</h2>
+  <p>If login didn’t open, <a href="https://accounts.spotify.com/en/login" target="_blank">click here</a></p>
 </body>
 </html>
