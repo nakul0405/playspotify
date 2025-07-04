@@ -1,7 +1,8 @@
 from flask import Flask, request, redirect
 import requests, json, urllib.parse
 from datetime import datetime, timedelta
-from config import SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI
+import telegram
+from config import SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, BOT_TOKEN
 
 app = Flask(__name__)
 TOKENS_FILE = "tokens.json"
@@ -29,10 +30,9 @@ def home():
     return "✅ Spotify OAuth Server Running"
 
 @app.route('/login')
-def spotify_login():
+def login():
     user_id = request.args.get('user_id')
     scope = "user-read-currently-playing user-read-recently-played user-top-read"
-
     auth_url = "https://accounts.spotify.com/authorize?" + urllib.parse.urlencode({
         "client_id": SPOTIFY_CLIENT_ID,
         "response_type": "code",
@@ -40,7 +40,6 @@ def spotify_login():
         "scope": scope,
         "state": user_id
     })
-
     return redirect(auth_url)
 
 @app.route('/callback')
@@ -63,9 +62,14 @@ def callback():
     profile = requests.get("https://api.spotify.com/v1/me", headers=headers).json()
 
     save_token(user_id, data, profile.get("display_name", "Unknown"), profile["id"])
+
+    # ✅ Telegram message to confirm login
+    bot = telegram.Bot(token=BOT_TOKEN)
+    bot.send_message(chat_id=user_id, text=f"✅ Spotify connected successfully for {profile.get('display_name', 'Spotify User')}!")
+
     return "✅ Spotify login successful! You can return to Telegram."
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8080)
 
-application = app  # for Render deployment
+application = app
