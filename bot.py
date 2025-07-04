@@ -6,7 +6,22 @@ TOKENS_FILE = "tokens.json"
 
 def start(update, context):
     update.message.reply_text(
-        "👋 Welcome to playspotify created by @Nakulrathod0405!\nUse /login to connect your Spotify account."
+        "🎧 Welcome to PlaySpotify by Nakul
+
+Track what your Friends listening to — see all the things your spotify don’t have!
+This bot connects with your Spotify account and shows:
+
+✅ Friends Live Activity 
+✅ Song details (title, artist, album, time)
+✅ Your listening activity. 
+
+To get started, simply tap the button below to log in with your Spotify account 👇
+
+🔐 /login – Connect your Spotify account securely
+
+
+Made with ❤️  
+Dev { @Nakulrathod0405 }"
     )
 
 def login(update, context):
