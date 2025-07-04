@@ -6,10 +6,12 @@ from config import BOT_TOKEN, OWNER_ID
 
 TOKENS_FILE = "tokens.json"
 
-# ----------- BOT COMMANDS -----------
+# ----------- COMMAND HANDLERS -----------
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("👋 Welcome to Playspotify created by @Nakulrathod0405!\nUse /login to connect your Spotify account.")
+    await update.message.reply_text(
+        "👋 Welcome to Playspotify by @Nakulrathod0405!\nUse /login to connect your Spotify account."
+    )
 
 async def login(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
@@ -18,7 +20,6 @@ async def login(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def logout(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
-
     try:
         with open(TOKENS_FILE, "r") as f:
             tokens = json.load(f)
@@ -34,8 +35,7 @@ async def logout(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⚠️ You are not logged in.")
 
 async def onlyforadmin(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    if user_id != OWNER_ID:
+    if update.effective_user.id != OWNER_ID:
         await update.message.reply_text("⛔ You are not authorized to use this command.")
         return
 
@@ -49,7 +49,7 @@ async def onlyforadmin(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ No one has logged in yet.")
         return
 
-    msg = "👑 Admin View: Logged-in Users\n\n"
+    msg = "👑 Logged-in Users:\n"
     for uid, info in tokens.items():
         name = info.get("display_name", "Unknown")
         msg += f"• {name} (ID: {uid})\n"
@@ -58,7 +58,6 @@ async def onlyforadmin(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def activeusers(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
-
     try:
         with open(TOKENS_FILE, "r") as f:
             tokens = json.load(f)
@@ -72,7 +71,6 @@ async def activeusers(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def mytrack(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
-
     try:
         with open(TOKENS_FILE, "r") as f:
             tokens = json.load(f)
@@ -90,20 +88,25 @@ async def mytrack(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⏸ You are not playing anything right now.")
         return
 
-    data = r.json()
-    item = data.get("item")
+    try:
+        data = r.json()
+        item = data.get("item")
 
-    if not item:
-        await update.message.reply_text("⚠️ Could not fetch current track.")
-        return
+        if not item:
+            raise ValueError("Invalid data format")
 
-    name = item["name"]
-    artists = ", ".join([artist["name"] for artist in item["artists"]])
-    url = item["external_urls"]["spotify"]
+        name = item["name"]
+        artists = ", ".join([artist["name"] for artist in item["artists"]])
+        url = item["external_urls"]["spotify"]
 
-    await update.message.reply_text(f"🎶 Now Playing:\n**{name}**\n👤 {artists}\n🔗 {url}", parse_mode="Markdown")
+        await update.message.reply_text(
+            f"🎶 Now Playing:\n*{name}*\n👤 {artists}\n🔗 {url}",
+            parse_mode="Markdown"
+        )
+    except:
+        await update.message.reply_text("⚠️ Could not fetch current track. Try again later.")
 
-# ----------- RUN BOT -----------
+# ----------- RUN THE BOT -----------
 
 if __name__ == '__main__':
     app = ApplicationBuilder().token(BOT_TOKEN).build()
