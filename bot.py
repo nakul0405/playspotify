@@ -55,30 +55,27 @@ def callback():
         "client_secret": SPOTIFY_CLIENT_SECRET
     }
 
-    r = requests.post("https://accounts.spotify.com/api/token", data=token_data)
-
     try:
+        r = requests.post("https://accounts.spotify.com/api/token", data=token_data)
         data = r.json()
-    except Exception:
-        return f"❌ Failed to parse Spotify response: {r.text}", 500
+    except Exception as e:
+        return f"❌ Error while getting token: {str(e)} | Raw: {r.text}", 500
 
     if "access_token" not in data:
-        return f"❌ Spotify did not return access_token: {data}", 500
+        return f"❌ Invalid token response from Spotify: {data}", 500
 
-    headers = {"Authorization": f"Bearer {data['access_token']}"}
-    profile = requests.get("https://api.spotify.com/v1/me", headers=headers).json()
-
-    save_token(user_id, data, profile.get("display_name", "Unknown"), profile["id"])
-
-    # ✅ Telegram confirmation
     try:
-        bot = telegram.Bot(token=BOT_TOKEN)
-        bot.send_message(
-            chat_id=user_id,
-            text=f"✅ Spotify connected successfully for {profile.get('display_name', 'Spotify User')}!"
-        )
+        headers = {"Authorization": f"Bearer {data['access_token']}"}
+        profile = requests.get("https://api.spotify.com/v1/me", headers=headers).json()
     except Exception as e:
-        return f"✅ Login done but Telegram error: {e}", 200
+        return f"❌ Failed to fetch user profile: {str(e)}", 500
+
+    try:
+        save_token(user_id, data, profile.get("display_name", "Unknown"), profile["id"])
+        bot = telegram.Bot(token=BOT_TOKEN)
+        bot.send_message(chat_id=user_id, text=f"✅ Spotify connected successfully for {profile.get('display_name', 'Spotify User')}!")
+    except Exception as e:
+        return f"❌ Failed to save or send message: {str(e)}", 500
 
     return "✅ Spotify login successful! You can return to Telegram."
 
