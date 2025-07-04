@@ -5,29 +5,23 @@ import requests, json
 TOKENS_FILE = "tokens.json"
 
 def start(update, context):
-    update.message.reply_text(
-        "🎧 Welcome to PlaySpotify by Nakul
-
-Track what your Friends listening to — see all the things your spotify don’t have!
-This bot connects with your Spotify account and shows:
-
-✅ Friends Live Activity 
-✅ Song details (title, artist, album, time)
-✅ Your listening activity. 
-
-To get started, simply tap the button below to log in with your Spotify account 👇
-
-🔐 /login – Connect your Spotify account securely
-
-
-Made with ❤️  
-Dev { @Nakulrathod0405 }"
+    welcome_text = (
+        "🎧 *Welcome to PlaySpotify by Nakul!*\n\n"
+        "Track what your friends are listening to — see all the things your Spotify *doesn’t* have!\n\n"
+        "This bot connects with your Spotify account and shows:\n"
+        "✅ Friends' Live Activity\n"
+        "✅ Song details (title, artist, album, time)\n"
+        "✅ Your listening activity\n\n"
+        "*To get started, tap the button below to log in with your Spotify account 👇*\n\n"
+        "🔐 /login – Connect your Spotify account securely\n\n"
+        "_Made with ❤️  by @Nakulrathod0405_"
     )
+    update.message.reply_text(welcome_text, parse_mode="Markdown")
 
 def login(update, context):
     user_id = str(update.effective_user.id)
     login_url = f"https://playspotify.onrender.com/login?user_id={user_id}"
-    text = f"🔗 [Click here to log in with Spotify]({login_url})"
+    text = f"[🔗 Click here to log in with Spotify]({login_url})"
     update.message.reply_text(text, parse_mode="Markdown")
 
 def logout(update, context):
@@ -59,7 +53,7 @@ def mytrack(update, context):
     headers = {"Authorization": f"Bearer {token}"}
     r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
 
-    if r.status_code == 204 or r.status_code == 202:
+    if r.status_code in [204, 202]:
         update.message.reply_text("⏸ You are not playing anything.")
         return
 
