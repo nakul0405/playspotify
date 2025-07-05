@@ -1,8 +1,3 @@
-Bilkul bhai! 💯
-Tera `PlaySpotify` Telegram bot ke liye **GitHub-ready `README.md`** yeh raha:
-
----
-
 ## 🎧 PlaySpotify – Telegram Bot for Spotify Friends Activity
 
 > *Made with ❤️ & Madness by [@Nakulrathod0405](https://t.me/Nakulrathod0405)*
