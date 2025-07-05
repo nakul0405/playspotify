@@ -1,23 +1,28 @@
-# ✅ Official Playwright base image
-FROM mcr.microsoft.com/playwright/python:v1.45.0
+FROM python:3.10-slim
 
-# Working directory
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
 WORKDIR /app
 
-# Copy requirements
+# System packages for Playwright + Chrome deps
+RUN apt-get update && apt-get install -y \
+    wget git ffmpeg \
+    libglib2.0-0 libnss3 libgconf-2-4 libxss1 libasound2 libxtst6 \
+    libatk-bridge2.0-0 libgtk-3-0 libdrm2 libxcomposite1 libxrandr2 \
+    libxdamage1 libgbm1 libpango-1.0-0 libpangocairo-1.0-0 \
+    fonts-liberation libappindicator3-1 xdg-utils \
+    curl gnupg ca-certificates && rm -rf /var/lib/apt/lists/*
+
+# Copy and install requirements
 COPY requirements.txt .
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Install Python packages
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy all project files
+# Copy project files
 COPY . .
 
-# Expose port for Flask
-EXPOSE 5000
+# Install Playwright browsers
+RUN playwright install --with-deps
 
-# Install browsers (Chromium, etc.)
-RUN playwright install
-
-# Start app with Gunicorn
-CMD ["gunicorn", "auth_server:app", "--bind", "0.0.0.0:5000"]
+# Start both Flask and Bot using start.sh
+CMD ["bash", "start.sh"]
