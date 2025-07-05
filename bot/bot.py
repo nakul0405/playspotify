@@ -11,20 +11,24 @@ print("AUTH_SERVER_URL:", AUTH_SERVER_URL)
 TOKENS_FILE = "sp_dc_tokens.json"
 
 def start(update: Update, context: CallbackContext):
-    welcome_text = (
-        "🎧 *Welcome to PlaySpotify by Nakul!*\n\n"
-        "Track what your friends are listening to — even what Spotify won’t show you!\n\n"
-        "Use /login to login via Spotify and automatically set your cookie.\n"
-        "Or use /setcookie if you want to set cookie manually.\n\n"
-        "*Commands:*\n"
-        "🔐 /login - Login via Spotify\n"
-        "🔐 /setcookie your_sp_dc_token - Set cookie manually\n"
-        "🎵 /mytrack - Show your current playing track\n"
-        "👥 /friends - Show friends listening activity\n"
-        "🚪 /logout - Logout\n\n"
-        "_Made with ❤️ by @Nakulrathod0405_"
-    )
-    update.message.reply_text(welcome_text, parse_mode="Markdown")
+    welcome_text = welcome_text = r"""
+🎧 *Welcome to PlaySpotify by Nakul!*
+
+Track what your friends are listening to \- even what Spotify won’t show you\!
+
+Use /login to login via Spotify and automatically set your cookie\.  
+Or use /setcookie if you want to set cookie manually\.
+
+*Commands:*
+🔐 /login \- Login via Spotify  
+🔐 /setcookie your\_sp\_dc\_token \- Set cookie manually  
+🎵 /mytrack \- Show your current playing track  
+👥 /friends \- Show friends listening activity  
+🚪 /logout \- Logout
+
+_Made with ❤️ & Madness by @Nakulrathod0405_
+"""
+update.message.reply_text(welcome_text, parse_mode="MarkdownV2")
 
 def login(update: Update, context: CallbackContext):
     user_id = str(update.effective_user.id)
