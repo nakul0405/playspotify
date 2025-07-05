@@ -1,32 +1,17 @@
-# Use official slim Python image
+# Use official Python image
 FROM python:3.10-slim
-
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    git \
-    ffmpeg \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt
-
-# Copy the project files
+# Copy project files
 COPY . .
 
-# Make start.sh executable
-RUN chmod +x start.sh
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose Flask port if needed
-EXPOSE 5000
+# Expose port for auth_server
+EXPOSE 8000
 
-# Run both Flask and Telegram bot
-CMD ["./start.sh"]
+# Start both bot and auth server together
+CMD ["bash", "start.sh"]
