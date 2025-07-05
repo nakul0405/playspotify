@@ -12,7 +12,7 @@ This bot uses your `sp_dc` cookie (captured automatically via login) to show rea
 
 * 🔐 Spotify login with **automatic cookie extraction**
 * 🎵 See what **you're currently listening to**
-* 👥 Track what **your Spotify friends** are listening to (Spotivity-style)
+* 👥 Track what **your Spotify friends** are listening to
 * 📲 Fully works inside Telegram
 * 🧠 No need for Spotify Developer credentials
 * ☁️ Hosted using Render with Docker
