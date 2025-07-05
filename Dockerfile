@@ -12,14 +12,21 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     git \
     ffmpeg \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Copy your entire project
+# Copy the project files
 COPY . .
 
-# Start the Telegram bot
-CMD ["python", "bot.py"]
+# Make start.sh executable
+RUN chmod +x start.sh
+
+# Expose Flask port if needed
+EXPOSE 5000
+
+# Run both Flask and Telegram bot
+CMD ["./start.sh"]
