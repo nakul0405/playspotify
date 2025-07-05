@@ -1,14 +1,2 @@
 #!/bin/bash
-
-# Start Flask backend in background
-echo "🚀 Starting Flask Auth Server..."
-cd backend
-python3 auth_server.py &
-
-# Wait a bit for server to boot
-sleep 5
-
-# Start Telegram bot
-echo "🤖 Starting Telegram Bot..."
-cd ../bot
-python3 bot.py
+gunicorn auth_server:app --bind 0.0.0.0:$PORT
