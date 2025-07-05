@@ -1,11 +1,7 @@
 #!/bin/bash
 
-set -e
+echo "✅ Starting Flask Auth Server on port 8000..."
+python3 auth_server.py &
 
-echo "🚀 Starting Flask Auth Server..."
-python backend/auth_server.py &
-
-sleep 3
-
-echo "🤖 Starting Telegram Bot..."
-python bot/bot.py
+echo "🎧 Starting Telegram Bot..."
+python3 bot.py
