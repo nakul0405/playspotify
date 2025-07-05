@@ -17,21 +17,24 @@ def start(update: Update, context: CallbackContext):
     welcome_text = r"""
 🎧 *Welcome to PlaySpotify by Nakul\!*
 
-Track what your friends are listening to \- even what Spotify won’t show you\!
+Track what your friends are listening to — even what Spotify won’t show you\!
 
-Use /login to login via Spotify and automatically set your cookie\.  
-Or use /setcookie if you want to set cookie manually\.
+✅ Friends' Live Activity  
+✅ Song Details \(Title, Artist, Album, Time\)  
+✅ Your Listening Activity  
 
-*Commands:*
+To get started, tap below to log in with Spotify 👇
+
+*Commands:*  
 🔐 /login \- Login via Spotify  
 🔐 /setcookie your\_sp\_dc\_token \- Set cookie manually  
 🎵 /mytrack \- Show your current playing track  
 👥 /friends \- Show friends listening activity  
-🚪 /logout \- Logout
+🚪 /logout \- Logout  
 
 \_Made with ❤️ \& Madness by @Nakulrathod0405\_
 """
-    update.message.reply_text(welcome_text, parse_mode="MarkdownV2")
+update.message.reply_text(welcome_text, parse_mode="MarkdownV2")
 
 def login(update: Update, context: CallbackContext):
     user_id = str(update.effective_user.id)
