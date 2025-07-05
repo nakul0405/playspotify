@@ -2,13 +2,14 @@ from telegram.ext import Updater, CommandHandler
 from config import BOT_TOKEN
 import requests, json
 
-TOKENS_FILE = "sp_dc_tokens.json"  # Updated path for sp_dc
+TOKENS_FILE = "sp_dc_tokens.json"  # Path to sp_dc token file
 
 def start(update, context):
     welcome_text = (
         "🎧 *Welcome to PlaySpotify by Nakul!*\n\n"
         "Track what your friends are listening to — even what Spotify won’t show you!\n\n"
         "✅ Friends' Live Activity\n"
+        "✅ Song details (title, artist, album, time)\n"        
         "✅ Your Listening Activity\n\n"
         "*To get started, tap below to log in with Spotify 👇*\n"
         "🔐 /login\n"
@@ -18,9 +19,9 @@ def start(update, context):
 
 def login(update, context):
     user_id = str(update.effective_user.id)
-    login_url = f"https://playspotify.onrender.com/autologin?user_id={user_id}"  # replace with your real domain
+    login_url = f"https://playspotify.onrender.com/login?user_id={user_id}"  # Change if different
     update.message.reply_text(
-        f"[🔗 Click here to log in with Spotify]({login_url})", parse_mode="Markdown"
+        f"[🔐 Click here to login with Spotify]({login_url})", parse_mode="Markdown"
     )
 
 def mytrack(update, context):
