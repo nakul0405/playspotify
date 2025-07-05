@@ -1,12 +1,18 @@
 from telegram.ext import Updater, CommandHandler, CallbackContext
 from telegram import Update
-from config import BOT_TOKEN, AUTH_SERVER_URL  # AUTH_SERVER_URL = "http://yourflaskserver.com"
+from config import BOT_TOKEN, AUTH_SERVER_URL
 import requests
 import json
+
+# ✅ Debug Logs
+print("✅ bot.py loaded successfully")
+print("BOT_TOKEN:", BOT_TOKEN)
+print("AUTH_SERVER_URL:", AUTH_SERVER_URL)
 
 TOKENS_FILE = "sp_dc_tokens.json"
 
 def start(update: Update, context: CallbackContext):
+    print(f"📩 Received /start from: {update.effective_user.id}")
     welcome_text = (
         "🎧 *Welcome to PlaySpotify by Nakul!*\n\n"
         "Track what your friends are listening to — even what Spotify won’t show you!\n\n"
@@ -24,8 +30,8 @@ def start(update: Update, context: CallbackContext):
 
 def login(update: Update, context: CallbackContext):
     user_id = str(update.effective_user.id)
-    # Flask server login URL with Telegram user id as param so Flask can link cookie to user
     login_url = f"{AUTH_SERVER_URL}/login?telegram_id={user_id}"
+    print(f"🔐 Login requested by {user_id} → {login_url}")
     update.message.reply_text(
         f"🔐 Click here to login to Spotify and link your account:\n{login_url}"
     )
@@ -50,14 +56,11 @@ def setcookie(update: Update, context: CallbackContext):
         with open(TOKENS_FILE, "w") as f:
             json.dump(tokens, f, indent=2)
 
+        print(f"✅ Cookie saved for user {user_id}")
         update.message.reply_text("✅ Cookie saved successfully! Now you can use /mytrack or /friends.")
     except Exception as e:
-        print(e)
+        print("❌ Error saving cookie:", e)
         update.message.reply_text("⚠️ Error saving cookie.")
-
-def receive_cookie(update: Update, context: CallbackContext):
-    # This command is internal for testing or manual cookie sending (optional)
-    update.message.reply_text("⚠️ This command is not used by users.")
 
 def mytrack(update: Update, context: CallbackContext):
     user_id = str(update.effective_user.id)
@@ -70,13 +73,15 @@ def mytrack(update: Update, context: CallbackContext):
         "cookie": f"sp_dc={sp_dc}",
         "user-agent": "Mozilla/5.0"
     }
-    r = requests.get("https://spclient.wg.spotify.com/current-track/v1/me", headers=headers)
-
-    if r.status_code != 200:
-        update.message.reply_text("⚠️ Failed to fetch current track.")
-        return
 
     try:
+        r = requests.get("https://spclient.wg.spotify.com/current-track/v1/me", headers=headers)
+        print(f"🎵 Fetched /mytrack for user {user_id} | Status: {r.status_code}")
+
+        if r.status_code != 200:
+            update.message.reply_text("⚠️ Failed to fetch current track.")
+            return
+
         data = r.json()
         track = data.get("track")
         if not track:
@@ -89,7 +94,7 @@ def mytrack(update: Update, context: CallbackContext):
         update.message.reply_text(f"🎵 [{name} - {artist}]({url})", parse_mode="Markdown")
 
     except Exception as e:
-        print(e)
+        print("❌ Error in /mytrack:", e)
         update.message.reply_text("⚠️ Error processing track info.")
 
 def friends(update: Update, context: CallbackContext):
@@ -103,13 +108,15 @@ def friends(update: Update, context: CallbackContext):
         "cookie": f"sp_dc={sp_dc}",
         "user-agent": "Mozilla/5.0"
     }
-    r = requests.get("https://guc-spclient.spotify.com/presence-view/v1/buddylist", headers=headers)
-
-    if r.status_code != 200:
-        update.message.reply_text("⚠️ Failed to fetch friends activity.")
-        return
 
     try:
+        r = requests.get("https://guc-spclient.spotify.com/presence-view/v1/buddylist", headers=headers)
+        print(f"👥 Fetched /friends for user {user_id} | Status: {r.status_code}")
+
+        if r.status_code != 200:
+            update.message.reply_text("⚠️ Failed to fetch friends activity.")
+            return
+
         data = r.json()
         friends = data.get("friends", [])
 
@@ -131,7 +138,7 @@ def friends(update: Update, context: CallbackContext):
         update.message.reply_text(reply, parse_mode="Markdown")
 
     except Exception as e:
-        print(e)
+        print("❌ Error in /friends:", e)
         update.message.reply_text("⚠️ Error processing friends activity.")
 
 def logout(update: Update, context: CallbackContext):
@@ -143,10 +150,12 @@ def logout(update: Update, context: CallbackContext):
             del tokens[user_id]
             with open(TOKENS_FILE, "w") as f:
                 json.dump(tokens, f, indent=2)
+            print(f"🚪 Logged out {user_id}")
             update.message.reply_text("✅ Successfully logged out.")
         else:
             update.message.reply_text("⚠️ You are not logged in.")
-    except:
+    except Exception as e:
+        print("❌ Logout error:", e)
         update.message.reply_text("⚠️ Error during logout.")
 
 def get_sp_dc(user_id: str):
@@ -154,10 +163,13 @@ def get_sp_dc(user_id: str):
         with open(TOKENS_FILE, "r") as f:
             tokens = json.load(f)
         return tokens.get(user_id)
-    except:
+    except Exception as e:
+        print("❌ Error loading tokens:", e)
         return None
 
 def main():
+    print("🔁 Starting main() function...")
+
     updater = Updater(BOT_TOKEN, use_context=True)
     dp = updater.dispatcher
 
@@ -168,7 +180,7 @@ def main():
     dp.add_handler(CommandHandler("friends", friends))
     dp.add_handler(CommandHandler("logout", logout))
 
-    print("🤖 Bot is running...")
+    print("🤖 Bot is running and polling...")
     updater.start_polling()
     updater.idle()
 
