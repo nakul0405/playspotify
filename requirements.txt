@@ -1,4 +1,2 @@
-Flask==2.3.3
-requests==2.32.3
-python-telegram-bot==13.15
-spotipy==2.25.1
+Flask==3.0.0
+playwright==1.42.0
