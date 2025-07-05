@@ -18,7 +18,10 @@ logging.basicConfig(
 async def get_sp_dc(user_id):
     try:
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)  # headless=True for deployment
+            browser = await p.chromium.launch(
+                headless=True,
+                args=["--no-sandbox", "--disable-dev-shm-usage"]
+            )
             context = await browser.new_context()
             page = await context.new_page()
 
@@ -91,3 +94,4 @@ def start_login():
 # 🚀 Start Server
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+
