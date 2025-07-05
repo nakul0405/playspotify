@@ -4,7 +4,6 @@ from config import BOT_TOKEN, AUTH_SERVER_URL
 import requests
 import json
 
-# ✅ Debug Logs
 print("✅ bot.py loaded successfully")
 print("BOT_TOKEN:", BOT_TOKEN)
 print("AUTH_SERVER_URL:", AUTH_SERVER_URL)
@@ -14,19 +13,19 @@ TOKENS_FILE = "sp_dc_tokens.json"
 def start(update: Update, context: CallbackContext):
     print(f"📩 Received /start from: {update.effective_user.id}")
     welcome_text = (
-        "🎧 *Welcome to PlaySpotify by Nakul!*\n\n"
-        "Track what your friends are listening to — even what Spotify won’t show you!\n\n"
-        "Use /login to login via Spotify and automatically set your cookie.\n"
-        "Or use /setcookie if you want to set cookie manually.\n\n"
-        "Commands:\n"
-        "🔐 /login - Login via Spotify\n"
-        "🔐 /setcookie your_sp_dc_token - Set cookie manually\n"
-        "🎵 /mytrack - Show your current playing track\n"
-        "👥 /friends - Show friends listening activity\n"
-        "🚪 /logout - Logout\n\n"
+        "🎧 *Welcome to PlaySpotify by Nakul\\!*\\n\\n"
+        "Track what your friends are listening to \\- even what Spotify won’t show you\\!\\n\\n"
+        "Use /login to login via Spotify and automatically set your cookie\\.\\n"
+        "Or use /setcookie if you want to set cookie manually\\.\\n\\n"
+        "*Commands:*\\n"
+        "🔐 /login \\- Login via Spotify\\n"
+        "🔐 /setcookie your\\_sp\\_dc\\_token \\- Set cookie manually\\n"
+        "🎵 /mytrack \\- Show your current playing track\\n"
+        "👥 /friends \\- Show friends listening activity\\n"
+        "🚪 /logout \\- Logout\\n\\n"
         "_Made with ❤️ & Madness by @Nakulrathod0405_"
     )
-    update.message.reply_text(welcome_text, parse_mode="Markdown")
+    update.message.reply_text(welcome_text, parse_mode="MarkdownV2")
 
 def login(update: Update, context: CallbackContext):
     user_id = str(update.effective_user.id)
