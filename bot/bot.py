@@ -2,29 +2,46 @@ from telegram.ext import Updater, CommandHandler
 from config import BOT_TOKEN
 import requests, json
 
-TOKENS_FILE = "sp_dc_tokens.json"  # Path to sp_dc token file
+TOKENS_FILE = "sp_dc_tokens.json"
 
 def start(update, context):
     welcome_text = (
         "🎧 *Welcome to PlaySpotify by Nakul!*\n\n"
         "Track what your friends are listening to — even what Spotify won’t show you!\n\n"
+        "This bot connects with your Spotify account and shows:\n"
         "✅ Friends' Live Activity\n"
-        "✅ Song Details (Title, Artist, Album, Time)\n"        
+        "✅ Song details (title, artist, album, time)\n"        
         "✅ Your Listening Activity\n\n"
-        "*To get started, tap below to log in with Spotify 👇*\n"
-        "🔐 /login\n\n"
+        "*To get started, set your sp_dc cookie:*\n"
+        "🔐 /setcookie your_sp_dc_token_here\n"
         "_Made with ❤️ & Madness by @Nakulrathod0405_"
     )
     update.message.reply_text(welcome_text, parse_mode="Markdown")
 
-def login(update, context):
+def setcookie(update, context):
     user_id = str(update.effective_user.id)
-    login_url = f"https://playspotify.onrender.com/start_login?user_id={user_id}"
-    update.message.reply_text(
-        f"🔐 [Click here to securely log in with Spotify]({login_url})\n\n"
-        "After logging in, return and use /friends or /mytrack.",
-        parse_mode="Markdown"
-    )
+    if len(context.args) != 1:
+        update.message.reply_text("❌ Usage: /setcookie your_sp_dc_token")
+        return
+
+    sp_dc = context.args[0]
+
+    try:
+        try:
+            with open(TOKENS_FILE, "r") as f:
+                tokens = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            tokens = {}
+
+        tokens[user_id] = sp_dc
+
+        with open(TOKENS_FILE, "w") as f:
+            json.dump(tokens, f, indent=2)
+
+        update.message.reply_text("✅ Cookie saved successfully! Now you can use /mytrack or /friends.")
+    except Exception as e:
+        print(e)
+        update.message.reply_text("⚠️ Error saving cookie.")
 
 def mytrack(update, context):
     user_id = str(update.effective_user.id)
@@ -35,19 +52,20 @@ def mytrack(update, context):
         if not sp_dc:
             raise Exception("No token found")
     except:
-        update.message.reply_text("⚠️ You are not logged in. Use /login first.")
+        update.message.reply_text("⚠️ You are not logged in. Use /setcookie first.")
         return
 
     headers = {
         "cookie": f"sp_dc={sp_dc}",
         "user-agent": "Mozilla/5.0"
     }
+    r = requests.get("https://spclient.wg.spotify.com/current-track/v1/me", headers=headers)
+
+    if r.status_code != 200:
+        update.message.reply_text("⚠️ Failed to fetch current track.")
+        return
 
     try:
-        r = requests.get("https://spclient.wg.spotify.com/current-track/v1/me", headers=headers)
-        if r.status_code != 200:
-            raise Exception("Invalid response")
-
         data = r.json()
         track = data.get("track")
         if not track:
@@ -61,7 +79,7 @@ def mytrack(update, context):
 
     except Exception as e:
         print(e)
-        update.message.reply_text("⚠️ Couldn't fetch your track. Try again later.")
+        update.message.reply_text("⚠️ Error processing track info.")
 
 def friends(update, context):
     user_id = str(update.effective_user.id)
@@ -72,19 +90,20 @@ def friends(update, context):
         if not sp_dc:
             raise Exception("No token found")
     except:
-        update.message.reply_text("⚠️ You are not logged in. Use /login first.")
+        update.message.reply_text("⚠️ You are not logged in. Use /setcookie first.")
         return
 
     headers = {
         "cookie": f"sp_dc={sp_dc}",
         "user-agent": "Mozilla/5.0"
     }
+    r = requests.get("https://guc-spclient.spotify.com/presence-view/v1/buddylist", headers=headers)
+
+    if r.status_code != 200:
+        update.message.reply_text("⚠️ Failed to fetch friends activity.")
+        return
 
     try:
-        r = requests.get("https://guc-spclient.spotify.com/presence-view/v1/buddylist", headers=headers)
-        if r.status_code != 200:
-            raise Exception("Failed request")
-
         data = r.json()
         friends = data.get("friends", [])
 
@@ -107,30 +126,29 @@ def friends(update, context):
 
     except Exception as e:
         print(e)
-        update.message.reply_text("⚠️ Error processing friends' activity. Try again later.")
+        update.message.reply_text("⚠️ Error processing friends activity.")
 
 def logout(update, context):
     user_id = str(update.effective_user.id)
     try:
         with open(TOKENS_FILE, "r") as f:
             tokens = json.load(f)
-
         if user_id in tokens:
             del tokens[user_id]
             with open(TOKENS_FILE, "w") as f:
                 json.dump(tokens, f, indent=2)
-            update.message.reply_text("✅ You have been logged out successfully.")
+            update.message.reply_text("✅ Successfully logged out.")
         else:
             update.message.reply_text("⚠️ You are not logged in.")
     except:
-        update.message.reply_text("⚠️ Error during logout. Try again.")
+        update.message.reply_text("⚠️ Error during logout.")
 
 def main():
     updater = Updater(BOT_TOKEN, use_context=True)
     dp = updater.dispatcher
 
     dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("login", login))
+    dp.add_handler(CommandHandler("setcookie", setcookie))
     dp.add_handler(CommandHandler("mytrack", mytrack))
     dp.add_handler(CommandHandler("friends", friends))
     dp.add_handler(CommandHandler("logout", logout))
