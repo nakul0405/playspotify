@@ -112,7 +112,7 @@ Used by:
 
 * Telegram + Python community
 
-Created with 💻 by **t.me/Nakulrathod0405**
+Created with 💻 by **[Nakulrathod0405](https://t.me/Nakulrathod0405)**
 
 ---
 
