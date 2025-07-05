@@ -18,7 +18,7 @@ logging.basicConfig(
 async def get_sp_dc(user_id):
     try:
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=False)  # headless=True for deployment
+            browser = await p.chromium.launch(headless=True)  # headless=True for deployment
             context = await browser.new_context()
             page = await context.new_page()
 
