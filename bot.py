@@ -1,24 +1,36 @@
-from telegram.ext import Updater, CommandHandler
-from config import BOT_TOKEN
-import requests, json
+from telegram.ext import Updater, CommandHandler, CallbackContext
+from telegram import Update
+from config import BOT_TOKEN, AUTH_SERVER_URL  # AUTH_SERVER_URL = "http://yourflaskserver.com"
+import requests
+import json
 
 TOKENS_FILE = "sp_dc_tokens.json"
 
-def start(update, context):
+def start(update: Update, context: CallbackContext):
     welcome_text = (
         "🎧 *Welcome to PlaySpotify by Nakul!*\n\n"
         "Track what your friends are listening to — even what Spotify won’t show you!\n\n"
-        "This bot connects with your Spotify account and shows:\n"
-        "✅ Friends' Live Activity\n"
-        "✅ Song details (title, artist, album, time)\n"        
-        "✅ Your Listening Activity\n\n"
-        "*To get started, set your sp_dc cookie:*\n"
-        "🔐 /setcookie your_sp_dc_token_here\n"
+        "Use /login to login via Spotify and automatically set your cookie.\n"
+        "Or use /setcookie if you want to set cookie manually.\n\n"
+        "Commands:\n"
+        "🔐 /login - Login via Spotify\n"
+        "🔐 /setcookie your_sp_dc_token - Set cookie manually\n"
+        "🎵 /mytrack - Show your current playing track\n"
+        "👥 /friends - Show friends listening activity\n"
+        "🚪 /logout - Logout\n\n"
         "_Made with ❤️ & Madness by @Nakulrathod0405_"
     )
     update.message.reply_text(welcome_text, parse_mode="Markdown")
 
-def setcookie(update, context):
+def login(update: Update, context: CallbackContext):
+    user_id = str(update.effective_user.id)
+    # Flask server login URL with Telegram user id as param so Flask can link cookie to user
+    login_url = f"{AUTH_SERVER_URL}/login?telegram_id={user_id}"
+    update.message.reply_text(
+        f"🔐 Click here to login to Spotify and link your account:\n{login_url}"
+    )
+
+def setcookie(update: Update, context: CallbackContext):
     user_id = str(update.effective_user.id)
     if len(context.args) != 1:
         update.message.reply_text("❌ Usage: /setcookie your_sp_dc_token")
@@ -43,16 +55,15 @@ def setcookie(update, context):
         print(e)
         update.message.reply_text("⚠️ Error saving cookie.")
 
-def mytrack(update, context):
+def receive_cookie(update: Update, context: CallbackContext):
+    # This command is internal for testing or manual cookie sending (optional)
+    update.message.reply_text("⚠️ This command is not used by users.")
+
+def mytrack(update: Update, context: CallbackContext):
     user_id = str(update.effective_user.id)
-    try:
-        with open(TOKENS_FILE, "r") as f:
-            tokens = json.load(f)
-        sp_dc = tokens.get(user_id)
-        if not sp_dc:
-            raise Exception("No token found")
-    except:
-        update.message.reply_text("⚠️ You are not logged in. Use /setcookie first.")
+    sp_dc = get_sp_dc(user_id)
+    if not sp_dc:
+        update.message.reply_text("⚠️ You are not logged in. Use /login or /setcookie first.")
         return
 
     headers = {
@@ -81,16 +92,11 @@ def mytrack(update, context):
         print(e)
         update.message.reply_text("⚠️ Error processing track info.")
 
-def friends(update, context):
+def friends(update: Update, context: CallbackContext):
     user_id = str(update.effective_user.id)
-    try:
-        with open(TOKENS_FILE, "r") as f:
-            tokens = json.load(f)
-        sp_dc = tokens.get(user_id)
-        if not sp_dc:
-            raise Exception("No token found")
-    except:
-        update.message.reply_text("⚠️ You are not logged in. Use /setcookie first.")
+    sp_dc = get_sp_dc(user_id)
+    if not sp_dc:
+        update.message.reply_text("⚠️ You are not logged in. Use /login or /setcookie first.")
         return
 
     headers = {
@@ -119,7 +125,7 @@ def friends(update, context):
                 username = user.get("name") or "Unknown"
                 song = track.get("name")
                 artist = track.get("artist")
-                uri = track.get("uri").replace("spotify:track:", "https://open.spotify.com/track/")
+                uri = track["uri"].replace("spotify:track:", "https://open.spotify.com/track/")
                 reply += f"• *{username}*: [{song} - {artist}]({uri})\n"
 
         update.message.reply_text(reply, parse_mode="Markdown")
@@ -128,7 +134,7 @@ def friends(update, context):
         print(e)
         update.message.reply_text("⚠️ Error processing friends activity.")
 
-def logout(update, context):
+def logout(update: Update, context: CallbackContext):
     user_id = str(update.effective_user.id)
     try:
         with open(TOKENS_FILE, "r") as f:
@@ -143,11 +149,20 @@ def logout(update, context):
     except:
         update.message.reply_text("⚠️ Error during logout.")
 
+def get_sp_dc(user_id: str):
+    try:
+        with open(TOKENS_FILE, "r") as f:
+            tokens = json.load(f)
+        return tokens.get(user_id)
+    except:
+        return None
+
 def main():
     updater = Updater(BOT_TOKEN, use_context=True)
     dp = updater.dispatcher
 
     dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("login", login))
     dp.add_handler(CommandHandler("setcookie", setcookie))
     dp.add_handler(CommandHandler("mytrack", mytrack))
     dp.add_handler(CommandHandler("friends", friends))
@@ -159,3 +174,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
