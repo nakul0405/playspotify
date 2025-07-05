@@ -1,32 +1,41 @@
 import json
 import os
 
-COOKIES_FILE = "cookies.json"
+TOKENS_FILE = "sp_dc_tokens.json"
 
-def save_sp_dc_token(user_id, token):
+def save_sp_dc(telegram_id: str, sp_dc: str):
     try:
-        if os.path.exists(COOKIES_FILE):
-            with open(COOKIES_FILE, "r") as f:
-                cookies = json.load(f)
+        if os.path.exists(TOKENS_FILE):
+            with open(TOKENS_FILE, "r") as f:
+                data = json.load(f)
         else:
-            cookies = {}
+            data = {}
 
-        cookies[user_id] = token
+        data[telegram_id] = sp_dc
 
-        with open(COOKIES_FILE, "w") as f:
-            json.dump(cookies, f, indent=4)
+        with open(TOKENS_FILE, "w") as f:
+            json.dump(data, f, indent=2)
+        print(f"[store] ✅ Cookie saved for {telegram_id}")
     except Exception as e:
-        print("Error saving token:", e)
+        print(f"[store] ❌ Error saving cookie: {e}")
 
-def get_sp_dc_token(user_id):
+def get_sp_dc(telegram_id: str):
     try:
-        if not os.path.exists(COOKIES_FILE):
-            return None
-
-        with open(COOKIES_FILE, "r") as f:
-            cookies = json.load(f)
-
-        return cookies.get(user_id)
+        with open(TOKENS_FILE, "r") as f:
+            data = json.load(f)
+        return data.get(telegram_id)
     except Exception as e:
-        print("Error reading token:", e)
+        print(f"[store] ❌ Error reading cookie: {e}")
         return None
+
+def delete_sp_dc(telegram_id: str):
+    try:
+        with open(TOKENS_FILE, "r") as f:
+            data = json.load(f)
+        if telegram_id in data:
+            del data[telegram_id]
+            with open(TOKENS_FILE, "w") as f:
+                json.dump(data, f, indent=2)
+            print(f"[store] 🚪 Logged out {telegram_id}")
+    except Exception as e:
+        print(f"[store] ❌ Logout error: {e}")
