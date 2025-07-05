@@ -1,21 +1,23 @@
-# ✅ Use official Playwright base image
+# ✅ Official Playwright base image
 FROM mcr.microsoft.com/playwright/python:v1.45.0
 
-# Set working directory
+# Working directory
 WORKDIR /app
 
-# Copy requirements and install Python deps
+# Copy requirements
 COPY requirements.txt .
+
+# Install Python packages
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy app files
+# Copy all project files
 COPY . .
 
-# Expose port (Flask default)
+# Expose port for Flask
 EXPOSE 5000
 
-# ✅ Install Playwright browsers
+# Install browsers (Chromium, etc.)
 RUN playwright install
 
-# Start the Flask server
-CMD ["python", "auth_server.py"]
+# Start app with Gunicorn
+CMD ["gunicorn", "auth_server:app", "--bind", "0.0.0.0:5000"]
