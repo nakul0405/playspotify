@@ -25,7 +25,6 @@ def start(update: Update, context: CallbackContext):
         "_Made with ❤️ by @Nakulrathod0405_"
     )
     update.message.reply_text(welcome_text, parse_mode="Markdown")
-kdownV2")
 
 def login(update: Update, context: CallbackContext):
     user_id = str(update.effective_user.id)
