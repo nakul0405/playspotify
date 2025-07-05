@@ -8,20 +8,23 @@ def start(update, context):
     welcome_text = (
         "🎧 *Welcome to PlaySpotify by Nakul!*\n\n"
         "Track what your friends are listening to — even what Spotify won’t show you!\n\n"
+        "This bot connects with your Spotify account and shows:\n"
         "✅ Friends' Live Activity\n"
         "✅ Song details (title, artist, album, time)\n"        
         "✅ Your Listening Activity\n\n"
         "*To get started, tap below to log in with Spotify 👇*\n"
         "🔐 /login\n"
-        "_Made with ❤️ by @Nakulrathod0405_"
+        "_Made with ❤️ & Madness by @Nakulrathod0405_"
     )
     update.message.reply_text(welcome_text, parse_mode="Markdown")
 
 def login(update, context):
     user_id = str(update.effective_user.id)
-    login_url = f"https://playspotify.onrender.com/login?user_id={user_id}"  # Change if different
+    login_url = f"https://playspotify.onrender.com/start_login?user_id={user_id}"  # ✅ New Playwright-based login
     update.message.reply_text(
-        f"[🔐 Click here to login with Spotify]({login_url})", parse_mode="Markdown"
+        f"🔐 [Click here to securely log in with Spotify]({login_url})\n\n"
+        "After logging in, return and use /friends or /mytrack.",
+        parse_mode="Markdown"
     )
 
 def mytrack(update, context):
