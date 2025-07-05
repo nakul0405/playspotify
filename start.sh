@@ -1,6 +1,14 @@
 #!/bin/bash
-echo "🚀 Starting PlaySpotify bot + Flask..."
 
-python3 bot.py &
+# Start Flask backend in background
+echo "🚀 Starting Flask Auth Server..."
+cd backend
+python3 auth_server.py &
 
-cd web && python3 app.py
+# Wait a bit for server to boot
+sleep 5
+
+# Start Telegram bot
+echo "🤖 Starting Telegram Bot..."
+cd ../bot
+python3 bot.py
