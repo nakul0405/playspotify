@@ -3,32 +3,34 @@ from telegram import Update
 from config import BOT_TOKEN, AUTH_SERVER_URL
 import requests, json
 
+print("✅ bot.py loaded successfully")
 TOKENS_FILE = "sp_dc_tokens.json"
 
 def start(update: Update, context: CallbackContext):
     welcome_text = (
         "🎧 *Welcome to PlaySpotify by Nakul!*\n\n"
-        "Track what your friends are listening to — even what Spotify won’t show you!\n\n"
-        "✅ Friends' Live Activity\n"
-        "✅ Song Details (Title, Artist, Album, Time)\n"
+        "Track what your friends are listening to — even what Spotify won’t show you\\!\n\n"
+        "✅ Friends' Live Activity  \n"
+        "✅ Song Details \Title, Artist, Album, Time\  \n"
         "✅ Your Listening Activity\n\n"
-        "_To get started, choose any one method to login:_\n"
-        "1. Use `/login` to login via Spotify and automatically set your cookie.\n"
-        "2. Use `/setcookie <your_sp_dc_token>` to set cookie manually. 🌝\n\n"
+        "To get started, tap below to log in with Spotify 👇\n\n"
+        "> Use any one method to login:\\n"
+        "1\\. Use `/login` to login via Spotify and automatically set your cookie\\.\\n"
+        "2\\. Use `/setcookie <your_sp_dc_token>` if you want to set cookie manually\\. 🌝\n\n"
         "*Commands:*\n"
-        "🔐 /login - Login via Spotify\n"
-        "🔐 /setcookie your_sp_dc_token - Set cookie manually\n"
-        "🎵 /mytrack - Show your current playing track\n"
-        "👥 /friends - Show friends listening activity\n"
-        "🚪 /logout - Logout\n\n"
+        "🔐 /login \\- Login via Spotify\n"
+        "🔐 /setcookie your\\_sp\\_dc\\_token \\- Set cookie manually\n"
+        "🎵 /mytrack \\- Show your current playing track\n"
+        "👥 /friends \\- Show friends listening activity\n"
+        "🚪 /logout \\- Logout\n\n"
         "_Made with ❤️ & Madness by @Nakulrathod0405_"
     )
-    update.message.reply_text(welcome_text, parse_mode="Markdown")
+    update.message.reply_text(welcome_text, parse_mode="MarkdownV2")
 
 def login(update: Update, context: CallbackContext):
     user_id = str(update.effective_user.id)
     login_url = f"{AUTH_SERVER_URL}/login?telegram_id={user_id}"
-    update.message.reply_text(f"🔐 [Click here to login to Spotify]({login_url})", parse_mode="Markdown")
+    update.message.reply_text(f"🔐 Click here to login to Spotify:\n{login_url}")
 
 def setcookie(update: Update, context: CallbackContext):
     user_id = str(update.effective_user.id)
@@ -40,8 +42,7 @@ def setcookie(update: Update, context: CallbackContext):
         try:
             with open(TOKENS_FILE, "r") as f:
                 tokens = json.load(f)
-        except:
-            pass
+        except: pass
         tokens[user_id] = sp_dc
         with open(TOKENS_FILE, "w") as f:
             json.dump(tokens, f)
@@ -65,7 +66,7 @@ def mytrack(update: Update, context: CallbackContext):
 
     headers = {
         "cookie": f"sp_dc={sp_dc}",
-        "user-agent": "Spotify/8.6.72 Android/30"
+        "user-agent": "Spotify/8.5.0"
     }
     r = requests.get("https://spclient.wg.spotify.com/current-track/v1/me", headers=headers)
     if r.status_code != 200:
@@ -75,7 +76,7 @@ def mytrack(update: Update, context: CallbackContext):
     track = data.get("track")
     if not track:
         return update.message.reply_text("⏸ You're not playing anything.")
-
+    
     name = track["name"]
     artist = track["artist_name"]
     url = track["uri"].replace("spotify:track:", "https://open.spotify.com/track/")
@@ -89,7 +90,7 @@ def friends(update: Update, context: CallbackContext):
 
     headers = {
         "cookie": f"sp_dc={sp_dc}",
-        "user-agent": "Spotify/8.6.72 Android/30"
+        "user-agent": "Spotify/8.5.0"
     }
     r = requests.get("https://guc-spclient.spotify.com/presence-view/v1/buddylist", headers=headers)
     if r.status_code != 200:
@@ -100,7 +101,7 @@ def friends(update: Update, context: CallbackContext):
     if not friends:
         return update.message.reply_text("👥 No friends are listening right now.")
 
-    reply = "*🎧 Friends Listening Now:*\n\n"
+    reply = "🎧 *Friends Listening Now:*\n\n"
     for f in friends:
         u = f.get("user")
         t = f.get("track")
@@ -137,6 +138,7 @@ def main():
     dp.add_handler(CommandHandler("mytrack", mytrack))
     dp.add_handler(CommandHandler("friends", friends))
     dp.add_handler(CommandHandler("logout", logout))
+    print("🤖 Bot started and polling...")
     updater.start_polling()
     updater.idle()
 
