@@ -8,19 +8,18 @@ def start(update, context):
     welcome_text = (
         "🎧 *Welcome to PlaySpotify by Nakul!*\n\n"
         "Track what your friends are listening to — even what Spotify won’t show you!\n\n"
-        "This bot connects with your Spotify account and shows:\n"
         "✅ Friends' Live Activity\n"
-        "✅ Song details (title, artist, album, time)\n"        
+        "✅ Song Details (Title, Artist, Album, Time)\n"        
         "✅ Your Listening Activity\n\n"
         "*To get started, tap below to log in with Spotify 👇*\n"
-        "🔐 /login\n"
+        "🔐 /login\n\n"
         "_Made with ❤️ & Madness by @Nakulrathod0405_"
     )
     update.message.reply_text(welcome_text, parse_mode="Markdown")
 
 def login(update, context):
     user_id = str(update.effective_user.id)
-    login_url = f"https://playspotify.onrender.com/start_login?user_id={user_id}"  # ✅ New Playwright-based login
+    login_url = f"https://playspotify.onrender.com/start_login?user_id={user_id}"
     update.message.reply_text(
         f"🔐 [Click here to securely log in with Spotify]({login_url})\n\n"
         "After logging in, return and use /friends or /mytrack.",
@@ -36,20 +35,19 @@ def mytrack(update, context):
         if not sp_dc:
             raise Exception("No token found")
     except:
-        update.message.reply_text("⚠️ You are not logged in.")
+        update.message.reply_text("⚠️ You are not logged in. Use /login first.")
         return
 
     headers = {
         "cookie": f"sp_dc={sp_dc}",
         "user-agent": "Mozilla/5.0"
     }
-    r = requests.get("https://spclient.wg.spotify.com/current-track/v1/me", headers=headers)
-
-    if r.status_code != 200:
-        update.message.reply_text("⚠️ Failed to fetch current track.")
-        return
 
     try:
+        r = requests.get("https://spclient.wg.spotify.com/current-track/v1/me", headers=headers)
+        if r.status_code != 200:
+            raise Exception("Invalid response")
+
         data = r.json()
         track = data.get("track")
         if not track:
@@ -63,7 +61,7 @@ def mytrack(update, context):
 
     except Exception as e:
         print(e)
-        update.message.reply_text("⚠️ Error processing track info.")
+        update.message.reply_text("⚠️ Couldn't fetch your track. Try again later.")
 
 def friends(update, context):
     user_id = str(update.effective_user.id)
@@ -74,20 +72,19 @@ def friends(update, context):
         if not sp_dc:
             raise Exception("No token found")
     except:
-        update.message.reply_text("⚠️ You are not logged in.")
+        update.message.reply_text("⚠️ You are not logged in. Use /login first.")
         return
 
     headers = {
         "cookie": f"sp_dc={sp_dc}",
         "user-agent": "Mozilla/5.0"
     }
-    r = requests.get("https://guc-spclient.spotify.com/presence-view/v1/buddylist", headers=headers)
-
-    if r.status_code != 200:
-        update.message.reply_text("⚠️ Failed to fetch friends activity.")
-        return
 
     try:
+        r = requests.get("https://guc-spclient.spotify.com/presence-view/v1/buddylist", headers=headers)
+        if r.status_code != 200:
+            raise Exception("Failed request")
+
         data = r.json()
         friends = data.get("friends", [])
 
@@ -110,22 +107,23 @@ def friends(update, context):
 
     except Exception as e:
         print(e)
-        update.message.reply_text("⚠️ Error processing friends activity.")
+        update.message.reply_text("⚠️ Error processing friends' activity. Try again later.")
 
 def logout(update, context):
     user_id = str(update.effective_user.id)
     try:
         with open(TOKENS_FILE, "r") as f:
             tokens = json.load(f)
+
         if user_id in tokens:
             del tokens[user_id]
             with open(TOKENS_FILE, "w") as f:
                 json.dump(tokens, f, indent=2)
-            update.message.reply_text("✅ Successfully logged out.")
+            update.message.reply_text("✅ You have been logged out successfully.")
         else:
             update.message.reply_text("⚠️ You are not logged in.")
     except:
-        update.message.reply_text("⚠️ Error during logout.")
+        update.message.reply_text("⚠️ Error during logout. Try again.")
 
 def main():
     updater = Updater(BOT_TOKEN, use_context=True)
