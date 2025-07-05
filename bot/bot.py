@@ -11,21 +11,24 @@ print("AUTH_SERVER_URL:", AUTH_SERVER_URL)
 TOKENS_FILE = "sp_dc_tokens.json"
 
 def start(update: Update, context: CallbackContext):
-    welcome_text = (
-        "🎧 *Welcome to PlaySpotify by Nakul\\!*\\n\\n"
-        "Track what your friends are listening to \\- even what Spotify won’t show you\\!\\n\\n"
-        "Use /login to login via Spotify and automatically set your cookie\\.\\n"
-        "Or use /setcookie if you want to set cookie manually\\.\\n\\n"
-        "*Commands:*\\n"
-        "🔐 /login \\- Login via Spotify\\n"
-        "🔐 /setcookie your\\_sp\\_dc\\_token \\- Set cookie manually\\n"
-        "🎵 /mytrack \\- Show your current playing track\\n"
-        "👥 /friends \\- Show friends listening activity\\n"
-        "🚪 /logout \\- Logout\\n\\n"
-        "_Made with ❤️ & Madness by @Nakulrathod0405_"
-    )
-    update.message.reply_text(welcome_text, parse_mode="MarkdownV2")
+    welcome_text = r"""
+🎧 *Welcome to PlaySpotify by Nakul!*
 
+Track what your friends are listening to \- even what Spotify won’t show you\!
+
+Use /login to login via Spotify and automatically set your cookie\.  
+Or use /setcookie if you want to set cookie manually\.
+
+*Commands:*
+🔐 /login \- Login via Spotify  
+🔐 /setcookie your\_sp\_dc\_token \- Set cookie manually  
+🎵 /mytrack \- Show your current playing track  
+👥 /friends \- Show friends listening activity  
+🚪 /logout \- Logout
+
+_Made with ❤️ & Madness by @Nakulrathod0405_
+"""
+    update.message.reply_text(welcome_text, parse_mode="MarkdownV2")
 
 def login(update: Update, context: CallbackContext):
     user_id = str(update.effective_user.id)
@@ -34,7 +37,6 @@ def login(update: Update, context: CallbackContext):
     update.message.reply_text(
         f"🔐 Click here to login to Spotify and link your account:\n{login_url}"
     )
-
 
 def setcookie(update: Update, context: CallbackContext):
     user_id = str(update.effective_user.id)
@@ -80,7 +82,7 @@ def mytrack(update: Update, context: CallbackContext):
         print(f"🎵 Fetched /mytrack for user {user_id} | Status: {r.status_code}")
 
         if r.status_code != 200:
-            update.message.reply_text("⚠️ Failed to fetch current track.")
+            update.message.reply_text("⚠️ Failed to fetch current track. Cookie may be invalid or expired.")
             return
 
         data = r.json()
@@ -93,7 +95,6 @@ def mytrack(update: Update, context: CallbackContext):
         artist = track["artist_name"]
         url = track["uri"].replace("spotify:track:", "https://open.spotify.com/track/")
         update.message.reply_text(f"🎵 [{name} - {artist}]({url})", parse_mode="Markdown")
-
     except Exception as e:
         print("❌ Error in /mytrack:", e)
         update.message.reply_text("⚠️ Error processing track info.")
@@ -116,7 +117,7 @@ def friends(update: Update, context: CallbackContext):
         print(f"👥 Fetched /friends for user {user_id} | Status: {r.status_code}")
 
         if r.status_code != 200:
-            update.message.reply_text("⚠️ Failed to fetch friends activity.")
+            update.message.reply_text("⚠️ Failed to fetch friends activity. Cookie may be invalid or expired.")
             return
 
         data = r.json()
@@ -138,11 +139,9 @@ def friends(update: Update, context: CallbackContext):
                 reply += f"• *{username}*: [{song} - {artist}]({uri})\n"
 
         update.message.reply_text(reply, parse_mode="Markdown")
-
     except Exception as e:
         print("❌ Error in /friends:", e)
         update.message.reply_text("⚠️ Error processing friends activity.")
-
 
 def logout(update: Update, context: CallbackContext):
     user_id = str(update.effective_user.id)
@@ -161,7 +160,6 @@ def logout(update: Update, context: CallbackContext):
         print("❌ Logout error:", e)
         update.message.reply_text("⚠️ Error during logout.")
 
-
 def get_sp_dc(user_id: str):
     try:
         with open(TOKENS_FILE, "r") as f:
@@ -178,6 +176,7 @@ def main():
     updater = Updater(BOT_TOKEN, use_context=True)
     dp = updater.dispatcher
 
+    # Add command handlers
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("login", login))
     dp.add_handler(CommandHandler("setcookie", setcookie))
@@ -189,6 +188,4 @@ def main():
     updater.start_polling()
     updater.idle()
 
-
-if __name__ == "__main__":
-    main()
+if __na
