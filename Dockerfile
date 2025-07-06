@@ -1,17 +1,20 @@
-# Use official Python image
+# Use official Python base image
 FROM python:3.10-slim
 
 # Set working directory
 WORKDIR /app
 
-# Copy project files
-COPY . .
+# Install system dependencies (if needed)
+RUN apt-get update && apt-get install -y curl
 
-# Install dependencies
+# Copy files
+COPY . /app
+
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose port for auth_server
-EXPOSE 8000
+# Expose Flask server port
+EXPOSE 10000
 
-# Start both bot and auth server together
+# Run both Flask and Telegram bot
 CMD ["bash", "start.sh"]
