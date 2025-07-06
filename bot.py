@@ -123,10 +123,12 @@ def webhook():
     return "!", 200
 
 # ✅ Set Webhook
-@app.route('/setwebhook', methods=["GET"])
+@app.route("/setwebhook")
 def set_webhook():
-    success = bot.set_webhook(f"{WEBHOOK_URL}/webhook")
-    return f"Webhook set: {success}"
+    webhook_url = os.getenv("WEBHOOK_URL") + f"/{BOT_TOKEN}"
+    set_url = f"https://api.telegram.org/bot{BOT_TOKEN}/setWebhook"
+    response = requests.post(set_url, data={"url": webhook_url})
+    return f"Webhook set: {response.json()}"
 
 # ✅ Flask App Start
 if __name__ == "__main__":
