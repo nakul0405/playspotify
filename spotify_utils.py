@@ -1,60 +1,81 @@
 import requests
 import json
+import os
 
+# Optional: local file to cache friend activity (for auto_notify)
+activity_cache_file = "activity_cache.json"
+
+# --- FRIEND ACTIVITY ---
 def fetch_friend_activity(sp_dc):
     headers = {
-        "Cookie": f"sp_dc={sp_dc}",
+        "cookie": f"sp_dc={sp_dc}",
         "User-Agent": "Mozilla/5.0"
     }
-    url = "https://guc-spclient.spotify.com/presence-view/v1/buddylist"
+
     try:
-        res = requests.get(url, headers=headers)
-        if res.status_code == 200:
-            return res.json().get("friends", [])
-    except:
-        return []
+        resp = requests.get("https://open.spotify.com/api/v1/me/friends", headers=headers)
+        data = resp.json()
+        friends = []
 
-def detect_changes(user_id, new_data):
-    try:
-        with open("activity_cache.json", "r") as f:
-            cache = json.load(f)
-    except:
-        cache = {}
-
-    old_data = cache.get(user_id, [])
-    changes = []
-
-    for friend in new_data:
-        fid = friend.get("user_id")
-        track = friend.get("track", {}).get("name")
-        artist = friend.get("track", {}).get("artist")
-
-        old_track = next((f for f in old_data if f.get("user_id") == fid), {})
-        if old_track.get("track", {}).get("name") != track:
-            changes.append({
-                "name": friend.get("user_name"),
+        for f in data.get("friends", []):
+            name = f["user"]["name"]
+            track = f["track"]["name"]
+            artist = f["track"]["artist"]["name"]
+            friends.append({
+                "name": name,
                 "track": track,
                 "artist": artist
             })
 
-    cache[user_id] = new_data
-    with open("activity_cache.json", "w") as f:
-        json.dump(cache, f)
+        return friends
+    except Exception as e:
+        return []
 
-    return changes
-
-def get_my_track(access_token):
-    url = "https://api.spotify.com/v1/me/player/currently-playing"
-    headers = {
-        "Authorization": f"Bearer {access_token}"
-    }
+# --- DETECT CHANGES ---
+def detect_changes(user_id, latest_friends):
     try:
-        res = requests.get(url, headers=headers)
-        if res.status_code == 200 and res.json().get("item"):
-            item = res.json()["item"]
-            return {
-                "track": item["name"],
-                "artist": item["artists"][0]["name"]
-            }
+        if os.path.exists(activity_cache_file):
+            with open(activity_cache_file, "r") as f:
+                cache = json.load(f)
+        else:
+            cache = {}
+
+        previous = cache.get(user_id, [])
+        new_activity = []
+
+        for friend in latest_friends:
+            if friend not in previous:
+                new_activity.append(friend)
+
+        # Update cache
+        cache[user_id] = latest_friends
+        with open(activity_cache_file, "w") as f:
+            json.dump(cache, f, indent=2)
+
+        return new_activity
+    except:
+        return []
+
+# --- MY TRACK FETCHER ---
+def fetch_user_track(sp_dc):
+    headers = {
+        "cookie": f"sp_dc={sp_dc}",
+        "User-Agent": "Mozilla/5.0"
+    }
+
+    try:
+        resp = requests.get("https://api.spotify.com/v1/me/player", headers=headers)
+        data = resp.json()
+
+        if "item" not in data or not data["item"]:
+            return None
+
+        track_name = data["item"]["name"]
+        artist_name = data["item"]["artists"][0]["name"]
+
+        return {
+            "track": track_name,
+            "artist": artist_name
+        }
     except:
         return None
