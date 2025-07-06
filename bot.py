@@ -218,10 +218,7 @@ def main():
     app.add_handler(CommandHandler("logout", logout))
     app.add_handler(CommandHandler("hello", hello))
     app.add_handler(ChatMemberHandler(welcome_bot, ChatMemberHandler.MY_CHAT_MEMBER))
-
-    # Optional: fallback echo for debugging
-    app.add_handler(MessageHandler(filters.TEXT, lambda u, c: print("[DEBUG] Message received:", u.message.text)))
-
+    
     threading.Thread(target=auto_notify, args=(app.bot,), daemon=True).start()
     print("[BOT] Running polling...")
     app.run_polling()
