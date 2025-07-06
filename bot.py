@@ -7,13 +7,12 @@ from telegram import (
     Update,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
-    ChatMemberUpdated
 )
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
     ContextTypes,
-    ChatMemberHandler
+    ChatMemberHandler,
 )
 from spotify_utils import fetch_friend_activity, detect_changes
 
@@ -63,7 +62,7 @@ Use any one method to login:
 𝘔𝘢𝘥𝘦 𝘸𝘪𝘵𝘩 ❤️ & 𝘔𝘢𝘥𝘯𝘦𝘴𝘴 𝘣𝘺 @𝘕𝘢𝘬𝘶𝘭𝘙𝘢𝘵𝘩𝘰𝘥0405"""
         )
 
-# --- LOGIN Button ---
+# --- LOGIN ---
 async def login(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("🔐 Open Spotify Login Page", url="https://nakul0405.github.io/playspotify/helper.html")]
@@ -130,14 +129,17 @@ def auto_notify(bot: Bot):
 # --- BOT ADDED TO GROUP ---
 async def welcome_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     member_update = update.chat_member
-    if not member_update or not member_update.new_chat_member:
-        return
-    if member_update.new_chat_member.user.id != context.bot.id:
-        return
-    old_status = member_update.old_chat_member.status
-    new_status = member_update.new_chat_member.status
-    if old_status in ("left", "kicked") and new_status == "administrator":
-        chat_id = member_update.chat.id
+    bot_id = context.bot.id
+
+    # Debugging logs
+    print(f"[DEBUG] Bot ID: {bot_id}")
+    print(f"[DEBUG] Chat ID: {update.effective_chat.id}")
+    print(f"[DEBUG] Old status: {member_update.old_chat_member.status}")
+    print(f"[DEBUG] New status: {member_update.new_chat_member.status}")
+    print(f"[DEBUG] New user ID: {member_update.new_chat_member.user.id}")
+
+    if member_update.new_chat_member.user.id == bot_id:
+        chat_id = update.effective_chat.id
         keyboard = [
             [
                 InlineKeyboardButton("🎧 Try the Bot", url="https://t.me/spotifybyNakul_bot"),
@@ -145,12 +147,13 @@ async def welcome_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
+
         await context.bot.send_message(
             chat_id=chat_id,
             text=(
-                "✅ Thanks for making me admin!\n\n"
-                "I’m *PlaySpotify* — a bot that shows what your friends are listening to, even if Spotify won’t 🕵️‍♂️🎧\n\n"
-                "Click below to get started 👇"
+                "✅ Thanks for adding me to this group!\n\n"
+                "I'm *PlaySpotify* — I show you what your Spotify friends are listening to, live! 🎧\n\n"
+                "Type /start to get started or click the buttons below 👇"
             ),
             reply_markup=reply_markup,
             parse_mode="Markdown"
@@ -163,7 +166,7 @@ def main():
     app.add_handler(CommandHandler("login", login))
     app.add_handler(CommandHandler("friends", friends))
     app.add_handler(CommandHandler("setcookie", setcookie))
-    app.add_handler(ChatMemberHandler(welcome_bot, ChatMemberHandler.MY_CHAT_MEMBER))
+    app.add_handler(ChatMemberHandler(welcome_bot, ChatMemberHandler.CHAT_MEMBER))  # FIXED HERE
     threading.Thread(target=auto_notify, args=(app.bot,), daemon=True).start()
     app.run_polling()
 
