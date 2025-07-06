@@ -155,7 +155,7 @@ async def hello(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
-        "✅ I’m *PlaySpotify* — your music spy bot 🕵️‍♂️🎶\n\nTap below to get started or connect with dev 👇",
+        "✅Hey, I’m *PlaySpotify* —  a Telegram bot that shows what your friends are listening to, even if Spotify won’t. 😎🎧\n\nTap below to try me or talk to my creator 🥶👇",
         reply_markup=reply_markup,
         parse_mode="Markdown"
     )
