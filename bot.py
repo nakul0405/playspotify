@@ -216,8 +216,8 @@ def main():
     app.add_handler(CommandHandler("friends", friends))
     app.add_handler(CommandHandler("mytrack", mytrack))
     app.add_handler(CommandHandler("logout", logout))
-    app.add_handler(CommandHandler("test", test_channel))
-    app.add_handler(ChatMemberHandler(welcome_bot, ChatMemberHandler.CHAT_MEMBER))
+    app.add_handler(CommandHandler("hello", hello))
+    app.add_handler(ChatMemberHandler(welcome_bot, ChatMemberHandler.MY_CHAT_MEMBER))
 
     # Optional: fallback echo for debugging
     app.add_handler(MessageHandler(filters.TEXT, lambda u, c: print("[DEBUG] Message received:", u.message.text)))
