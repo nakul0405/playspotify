@@ -13,7 +13,7 @@ def callback():
     user_id = request.args.get("state")
 
     if not code or not user_id:
-        return "Missing data"
+        return "❌ Missing code or user_id in request."
 
     payload = {
         "grant_type": "authorization_code",
@@ -23,19 +23,17 @@ def callback():
         "client_secret": SPOTIFY_CLIENT_SECRET,
     }
 
-    print("Code:", code)
-    print("Payload:", payload)
-
     res = requests.post("https://accounts.spotify.com/api/token", data=payload)
     token_data = res.json()
 
-    print("Token Response:", token_data)
+    print("Spotify token response:", token_data)  # ✅ Debug print
 
     if "access_token" in token_data:
         save_token(user_id, token_data)
         return render_template("login.html", user_id=user_id)
     else:
-        return "Token exchange failed."
+        # Show real error on screen
+        return f"❌ Token exchange failed: {token_data}"
 
 @app.route("/set_spdc", methods=["POST"])
 def set_spdc():
@@ -44,10 +42,11 @@ def set_spdc():
     sp_dc = json_data.get("sp_dc")
 
     if not sp_dc or not user_id:
-        return "Missing cookie/user_id", 400
+        return "❌ Missing cookie or user_id", 400
 
     save_cookie(user_id, sp_dc)
 
+    # ✅ Notify user via Telegram bot
     msg = "✅ *Spotify login successful!*\nNow use /mytrack and /friends."
     requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", data={
         "chat_id": user_id,
@@ -58,5 +57,5 @@ def set_spdc():
     return "✅ Cookie saved & login complete!"
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))
+    port = int(os.environ.get("PORT", 8080))  # Railway or Render default
     app.run(host="0.0.0.0", port=port)
