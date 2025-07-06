@@ -1,3 +1,5 @@
+# bot.py
+
 import telebot
 import os
 import requests
@@ -9,7 +11,7 @@ bot = telebot.TeleBot(BOT_TOKEN)
 # ✅ /start
 @bot.message_handler(commands=["start"])
 def start(message):
-    bot.reply_to(message, "👋 Welcome to PlaySpotify!\nUse /login to connect your Spotify account.")
+    bot.reply_to(message, "👋 *Welcome to PlaySpotify!*\nUse /login to connect your Spotify account.\n/setcookie your_sp_dc_here to use Friends Activity.", parse_mode="Markdown")
 
 # ✅ /login
 @bot.message_handler(commands=["login"])
@@ -31,9 +33,10 @@ def login(message):
         f"&state={user_id}"
         f"&show_dialog=true"
     )
+
     bot.reply_to(message, f"🔗 [Click here to login with Spotify]({auth_url})", parse_mode="Markdown")
 
-# ✅ /setcookie your_sp_dc_here
+# ✅ /setcookie
 @bot.message_handler(commands=["setcookie"])
 def setcookie(message):
     args = message.text.split(" ", 1)
@@ -52,47 +55,54 @@ def mytrack(message):
     sp_dc = get_cookie(user_id)
 
     if not sp_dc:
-        bot.reply_to(message, "❌ Please login first using /login.")
+        bot.reply_to(message, "❌ Please login first using /login or /setcookie.")
         return
 
     try:
         headers = {
             "Cookie": f"sp_dc={sp_dc}",
+            "app-platform": "WebPlayer",
             "User-Agent": "Mozilla/5.0"
         }
-        res = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
-        if res.status_code == 204:
-            bot.reply_to(message, "🔇 Nothing is playing right now.")
-        elif res.status_code == 200:
-            data = res.json()
-            name = data['item']['name']
-            artists = ", ".join([artist['name'] for artist in data['item']['artists']])
-            url = data['item']['external_urls']['spotify']
+        session = requests.Session()
+        r = session.get("https://guc-spclient.spotify.com/now-playing-view/v1/view", headers=headers)
+
+        if r.status_code == 200:
+            data = r.json()
+            track = data.get("track", {})
+            name = track.get("name", "Unknown")
+            artists = ", ".join([a["name"] for a in track.get("artists", [])])
+            url = track.get("uri", "").replace("spotify:track:", "https://open.spotify.com/track/")
+
             bot.reply_to(message, f"🎵 Now playing:\n*{name}* by *{artists}*\n[Open in Spotify]({url})", parse_mode="Markdown")
+        elif r.status_code == 204:
+            bot.reply_to(message, "🔇 Nothing is playing right now.")
         else:
-            bot.reply_to(message, f"⚠️ Could not fetch track. Status code: {res.status_code}")
+            bot.reply_to(message, f"⚠️ Could not fetch track. Status code: {r.status_code}")
     except Exception as e:
         bot.reply_to(message, f"❌ Error: {e}")
 
-# ✅ /friends (if implemented)
+# ✅ /friends
 @bot.message_handler(commands=["friends"])
 def friends(message):
     user_id = str(message.chat.id)
     sp_dc = get_cookie(user_id)
 
     if not sp_dc:
-        bot.reply_to(message, "❌ Please login first using /login.")
+        bot.reply_to(message, "❌ Please login first using /login or /setcookie.")
         return
 
     try:
         headers = {
             "Cookie": f"sp_dc={sp_dc}",
+            "app-platform": "WebPlayer",
             "User-Agent": "Mozilla/5.0"
         }
-        res = requests.get("https://guc-spclient.spotify.com/presence-view/v1/buddylist", headers=headers)
 
-        if res.status_code == 200:
-            data = res.json()
+        r = requests.get("https://spclient.wg.spotify.com/presence-view/v1/buddylist", headers=headers)
+
+        if r.status_code == 200:
+            data = r.json()
             friends = data.get("friends", [])
             if not friends:
                 bot.reply_to(message, "👥 No friends are listening right now.")
@@ -107,10 +117,10 @@ def friends(message):
 
             bot.reply_to(message, reply, parse_mode="Markdown")
         else:
-            bot.reply_to(message, f"❌ Failed to fetch friends activity. Status: {res.status_code}")
+            bot.reply_to(message, f"❌ Failed to fetch friends activity. Status: {r.status_code}")
     except Exception as e:
         bot.reply_to(message, f"❌ Error: {e}")
 
-# ✅ Bot start
+# ✅ Start polling
 print("🤖 Bot is running...")
 bot.infinity_polling()
