@@ -8,14 +8,12 @@ from config import BOT_TOKEN
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
 
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # example: https://playspotify-production-7e4f.up.railway.app
+WEBHOOK_URL = os.getenv("WEBHOOK_URL") + "/webhook"  # corrected
 
-# ✅ /start
 @bot.message_handler(commands=["start"])
 def start(message):
     bot.reply_to(message, "👋 Welcome to PlaySpotify!\nUse /login to connect your Spotify account.")
 
-# ✅ /login
 @bot.message_handler(commands=["login"])
 def login(message):
     user_id = message.chat.id
@@ -37,7 +35,6 @@ def login(message):
     )
     bot.reply_to(message, f"🔗 [Click here to login with Spotify]({auth_url})", parse_mode="Markdown")
 
-# ✅ /setcookie
 @bot.message_handler(commands=["setcookie"])
 def setcookie(message):
     args = message.text.split(" ", 1)
@@ -49,7 +46,6 @@ def setcookie(message):
     save_cookie(str(message.chat.id), sp_dc)
     bot.reply_to(message, "✅ Cookie saved! You can now use /mytrack and /friends.")
 
-# ✅ /mytrack
 @bot.message_handler(commands=["mytrack"])
 def mytrack(message):
     user_id = str(message.chat.id)
@@ -78,7 +74,6 @@ def mytrack(message):
     except Exception as e:
         bot.reply_to(message, f"❌ Error: {e}")
 
-# ✅ /friends
 @bot.message_handler(commands=["friends"])
 def friends(message):
     user_id = str(message.chat.id)
@@ -122,14 +117,21 @@ def webhook():
     bot.process_new_updates([update])
     return "!", 200
 
-# ✅ Set Webhook
+# ✅ Set webhook
 @app.route("/setwebhook")
 def set_webhook():
-    webhook_url = os.getenv("WEBHOOK_URL") + f"/{BOT_TOKEN}"
-    set_url = f"https://api.telegram.org/bot{BOT_TOKEN}/setWebhook"
-    response = requests.post(set_url, data={"url": webhook_url})
+    response = requests.post(
+        f"https://api.telegram.org/bot{BOT_TOKEN}/setWebhook",
+        data={"url": WEBHOOK_URL}
+    )
     return f"Webhook set: {response.json()}"
 
-# ✅ Flask App Start
+# ✅ Remove webhook (optional)
+@app.route("/removewebhook")
+def remove_webhook():
+    response = requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook")
+    return f"Webhook removed: {response.json()}"
+
+# ✅ Flask App
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
