@@ -70,7 +70,7 @@ async def login(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
-        "Tap below to log in and send your Spotify cookie 👇\n(If Telegram browser doesn’t work, copy and open in Chrome/Safari)",
+        "Tap below to log in and send your Spotify cookie \n(𝘤𝘰𝘱𝘺 𝘭𝘪𝘯𝘬 𝘢𝘯𝘥 𝘰𝘱𝘦𝘯 𝘪𝘯 𝘊𝘩𝘳𝘰𝘮𝘦/𝘚𝘢𝘧𝘢𝘳𝘪 𝘪𝘯𝘤𝘢𝘴𝘦 𝘭𝘪𝘯𝘬 𝘥𝘰𝘦𝘴𝘯’𝘵 𝘸𝘰𝘳𝘬 𝘪𝘯 𝘵𝘦𝘭𝘦𝘨𝘳𝘢𝘮 𝘣𝘳𝘰𝘸𝘴𝘦𝘳)👇)",
         reply_markup=reply_markup
     )
 
