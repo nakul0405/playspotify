@@ -1,6 +1,5 @@
 import requests
 import json
-import time
 
 def fetch_friend_activity(sp_dc):
     headers = {
