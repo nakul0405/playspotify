@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Logging in...</title>
+  <title>Logging you in...</title>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       const cookie = document.cookie.split("; ").find(row => row.startsWith("sp_dc="));
       if (!cookie) {
-        document.body.innerHTML = "❌ Could not find your sp_dc cookie. Please open this link in a browser where you're logged into Spotify.";
+        document.body.innerHTML = "❌ Could not find your sp_dc cookie.<br><br>Please make sure you're logged in to https://open.spotify.com and try again.";
         return;
       }
 
@@ -27,7 +27,7 @@
         document.body.innerHTML = data;
       })
       .catch(err => {
-        document.body.innerHTML = "❌ Something went wrong while saving your cookie.";
+        document.body.innerHTML = "❌ Something went wrong.";
       });
     });
   </script>
