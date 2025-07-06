@@ -25,30 +25,31 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             json.dump(cookies, f, indent=2)
         await update.message.reply_text("✅ Login successful! Spotify tracking is now active.")
     else:
-        await update.message.reply_text("👋 🎧 Welcome to PlaySpotify by Nakul!
+        await update.message.reply_text(
+            """👋 🎧 Welcome to PlaySpotify by Nakul!
 
 Track what your friends are listening to — even what Spotify won’t show you!
 
-✅ Friends' Live Activity
-✅ Song Details (Title, Artist, Album, Time)
-✅ Your Listening Activity
+✅ Friends' Live Activity  
+✅ Song Details (Title, Artist, Album, Time)  
+✅ Your Listening Activity  
 
 To get started, tap below to log in with Spotify 👇
 
-Use any one method to login: 
- 
-1. Use /login to login via Spotify and automatically set your cookie. 
-2. Use /setcookie <your sp_df token>if you want to set cookie manually. 🌝
+Use any one method to login:
 
-*Commands:*
-🔐 /login - Login via Spotify  
-🔐 /setcookie - your sp_dc token - Set cookie manually  
-🎵 /mytrack - Show your current playing track  (coming soon)
-👥 /friends - Show friends listening activity  
-🚪 /logout - Logout
+1. Use /login to login via Spotify and automatically set your cookie  
+2. Use /setcookie <your sp_dc token> if you want to set cookie manually 🌝
 
+*Commands:*  
+🔐 /login – Login via Spotify  
+🔐 /setcookie <token> – Set cookie manually  
+🎵 /mytrack – Show your current playing track (coming soon)  
+👥 /friends – Show friends listening activity  
+🚪 /logout – Logout
 
-Made with ❤️ & Madness by @Nakulrathod0405 .")
+Made with ❤️ & Madness by @Nakulrathod0405"""
+        )
 
 async def login(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
@@ -122,3 +123,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
