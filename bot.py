@@ -58,7 +58,7 @@ async def login(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     await update.message.reply_text(
-        "Tap below to log in and automatically send your Spotify cookie 👇",
+        "Tap below to log in and automatically send your Spotify cookie (Copy Link and Paste in chrome/safari in case link doesn't work👇",
         reply_markup=reply_markup
     )
 
