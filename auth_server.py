@@ -1,55 +1,57 @@
-from flask import Flask, request, redirect
+from flask import Flask, request, render_template
 import requests
-import base64
-import urllib.parse
-from store import save_token
-from config import SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI
+import os
+from config import *
+from store import save_token, save_cookie
 
 app = Flask(__name__)
+app.template_folder = "templates"
 
 @app.route("/callback")
 def callback():
     code = request.args.get("code")
-    state = request.args.get("state")  # Telegram user_id
-    error = request.args.get("error")
+    user_id = request.args.get("state")
 
-    if error:
-        return "❌ Spotify authorization failed."
+    if not code or not user_id:
+        return "Missing data"
 
-    # Encode client ID + secret in base64
-    auth_str = f"{SPOTIFY_CLIENT_ID}:{SPOTIFY_CLIENT_SECRET}"
-    b64_auth = base64.b64encode(auth_str.encode()).decode()
-
-    headers = {
-        "Authorization": f"Basic {b64_auth}",
-        "Content-Type": "application/x-www-form-urlencoded"
-    }
-
-    data = {
+    payload = {
         "grant_type": "authorization_code",
         "code": code,
-        "redirect_uri": SPOTIFY_REDIRECT_URI
+        "redirect_uri": SPOTIFY_REDIRECT_URI,
+        "client_id": SPOTIFY_CLIENT_ID,
+        "client_secret": SPOTIFY_CLIENT_SECRET,
     }
 
-    r = requests.post("https://accounts.spotify.com/api/token", headers=headers, data=data)
+    res = requests.post("https://accounts.spotify.com/api/token", data=payload)
+    data = res.json()
 
-    if r.status_code != 200:
-        return "❌ Failed to get token from Spotify."
+    if "access_token" in data:
+        save_token(user_id, data)
+        return render_template("login.html", user_id=user_id)
+    else:
+        return "Token exchange failed."
 
-    tokens = r.json()
-    access_token = tokens.get("access_token")
-    refresh_token = tokens.get("refresh_token")
+@app.route("/set_spdc", methods=["POST"])
+def set_spdc():
+    json_data = request.get_json()
+    user_id = json_data.get("user_id")
+    sp_dc = json_data.get("sp_dc")
 
-    if not access_token or not refresh_token:
-        return "❌ Spotify did not return tokens."
+    if not sp_dc or not user_id:
+        return "Missing cookie/user_id", 400
 
-    # Save the token with user_id as key
-    save_token(state, {
-        "access_token": access_token,
-        "refresh_token": refresh_token
+    save_cookie(user_id, sp_dc)
+
+    msg = "✅ *Spotify login successful!*\nNow use /mytrack and /friends."
+    requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", data={
+        "chat_id": user_id,
+        "text": msg,
+        "parse_mode": "Markdown"
     })
 
-    return f"✅ Spotify connected successfully! You can now return to Telegram."
+    return "✅ Cookie saved & login complete!"
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
