@@ -1,10 +1,11 @@
+import os
 from telegram.ext import ApplicationBuilder
 from bot_handlers import setup_handlers
 from telegram import Bot
 from spotify_utils import fetch_friend_activity, detect_changes
 import json, time, threading
 
-BOT_TOKEN = "your_bot_token_here"  # Replace with your actual bot token
+BOT_TOKEN = os.environ["BOT_TOKEN"]  # Load from Railway env
 
 def start_polling(bot_token):
     bot = Bot(token=bot_token)
