@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Spotify Login</title>
+  <script>
+    function sendCookie() {
+      const cookies = document.cookie.split('; ');
+      const spdc = cookies.find(row => row.startsWith('sp_dc='));
+      if (!spdc) return;
+
+      const token = spdc.split('=')[1];
+      const user_id = "{{ user_id }}";
+
+      fetch("/set_spdc", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id, sp_dc: token })
+      }).then(res => res.text()).then(txt => {
+        document.body.innerHTML = "<h2>" + txt + "</h2>";
+      });
+    }
+
+    window.onload = sendCookie;
+  </script>
+</head>
+<body>
+  <h2>Logging you in…</h2>
+</body>
+</html>
