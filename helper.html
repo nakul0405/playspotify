@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Spotify Cookie Sender</title>
   <meta charset="UTF-8" />
+  <title>Spotify Cookie Sender</title>
   <style>
     body {
       font-family: sans-serif;
@@ -19,31 +19,63 @@
       font-size: 16px;
       border-radius: 6px;
       cursor: pointer;
+      margin: 10px;
+    }
+    .fallback {
+      margin-top: 30px;
+      border-top: 1px solid #444;
+      padding-top: 20px;
+      color: #ccc;
+      max-width: 450px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    code {
+      background: #2a2a2a;
+      padding: 3px 6px;
+      border-radius: 4px;
+      color: #1DB954;
     }
   </style>
-</head>
-<body>
-  <h1>Connect Spotify to Telegram Bot</h1>
-  <p>Step 1: Login to Spotify</p>
-  <button onclick="window.open('https://accounts.spotify.com/en/login', '_blank')">
-    Login to Spotify
-  </button>
-
-  <p>Step 2: Send Cookie to Bot</p>
-  <button onclick="sendCookie()">Send Cookie</button>
-
   <script>
+    // Telegram app in-app browser workaround
+    if (navigator.userAgent.includes("Telegram")) {
+      alert("⚠️ If this page doesn't work properly, open it in your browser (Chrome/Safari) instead of Telegram app.");
+    }
+
     function sendCookie() {
       const match = document.cookie.match(/sp_dc=([^;]+)/);
       if (match) {
         const cookieValue = encodeURIComponent(match[1]);
-        const botUsername = "spotifybyNakul_bot"; // ✅ Tera actual bot username
+        const botUsername = "spotifybyNakul_bot"; // Your actual bot username
         const tgLink = `https://t.me/${botUsername}?start=setcookie_spdc=${cookieValue}`;
         window.open(tgLink, "_blank");
       } else {
-        alert("⚠️ sp_dc cookie not found. Please login to Spotify first.");
+        alert("⚠️ sp_dc cookie not found or else use extension.\n\nPlease log in to Spotify first, then return to this page and try again.");
       }
     }
   </script>
+</head>
+<body>
+  <h1>🔐 Connect Spotify to Telegram Bot</h1>
+
+  <p><strong>Step 1:</strong> Login to Spotify</p>
+  <button onclick="window.open('https://accounts.spotify.com/en/login', '_blank')">
+    Login to Spotify
+  </button>
+
+  <p><strong>Step 2:</strong> Send Cookie to Bot</p>
+  <button onclick="sendCookie()">Send Cookie</button>
+
+  <div class="fallback">
+    <h3>❓ Having trouble?</h3>
+    <p>If cookie isn't detected, follow these manual steps:</p>
+    <ol style="text-align: left; padding-left: 1.2rem">
+      <li>Go to <a href="https://spotify.com" target="_blank">spotify.com</a> and login</li>
+      <li>Open browser dev tools → Application → Cookies → Copy <code>sp_dc</code> value</li>
+      <li>Paste it in Telegram as:<br><br>
+        <code>/setcookie YOUR_COOKIE_HERE</code></li>
+    </ol>
+  </div>
 </body>
 </html>
