@@ -60,7 +60,7 @@ Use any one method to login:
 👥 /friends – Show friends listening activity  
 🚪 /logout – Logout
 
-Made with ❤️ & Madness by @NakulRathod0405"""
+𝘔𝘢𝘥𝘦 𝘸𝘪𝘵𝘩 ❤️ & 𝘔𝘢𝘥𝘯𝘦𝘴𝘴 𝘣𝘺 @𝘕𝘢𝘬𝘶𝘭𝘙𝘢𝘵𝘩𝘰𝘥0405"""
         )
 
 # --- LOGIN Command with Button ---
