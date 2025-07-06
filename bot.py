@@ -1,87 +1,116 @@
-from telegram.ext import Updater, CommandHandler
-from telegram import ParseMode
+import telebot
+import os
 import requests
-from config import *
-from store import get_token, get_cookie
+from store import get_cookie, save_cookie
+from config import BOT_TOKEN
 
-updater = Updater(BOT_TOKEN, use_context=True)
-dp = updater.dispatcher
+bot = telebot.TeleBot(BOT_TOKEN)
 
-def start(update, context):
-    update.message.reply_text("👋 Welcome! Use /login to connect your Spotify account.")
+# ✅ /start
+@bot.message_handler(commands=["start"])
+def start(message):
+    bot.reply_to(message, "👋 Welcome to PlaySpotify!\nUse /login to connect your Spotify account.")
 
-def login(update, context):
-    user_id = update.effective_user.id
-    login_url = (
-        f"https://accounts.spotify.com/authorize?"
-        f"client_id={SPOTIFY_CLIENT_ID}&response_type=code"
-        f"&redirect_uri={SPOTIFY_REDIRECT_URI}"
-        f"&scope=user-read-playback-state+user-read-recently-played"
-        f"&state={user_id}&show_dialog=true"
+# ✅ /login
+@bot.message_handler(commands=["login"])
+def login(message):
+    user_id = message.chat.id
+    client_id = os.getenv("SPOTIFY_CLIENT_ID")
+    redirect_uri = os.getenv("SPOTIFY_REDIRECT_URI")
+
+    if not client_id or not redirect_uri:
+        bot.reply_to(message, "❌ Missing Spotify Client ID or Redirect URI.")
+        return
+
+    auth_url = (
+        f"https://accounts.spotify.com/authorize"
+        f"?client_id={client_id}"
+        f"&response_type=code"
+        f"&redirect_uri={redirect_uri}"
+        f"&scope=user-read-playback-state%20user-read-recently-played"
+        f"&state={user_id}"
+        f"&show_dialog=true"
     )
-    update.message.reply_text(f"🔗 Click here to login:\n{login_url}")
+    bot.reply_to(message, f"🔗 [Click here to login with Spotify]({auth_url})", parse_mode="Markdown")
 
-def mytrack(update, context):
-    user_id = update.effective_user.id
-    token_data = get_token(user_id)
-    if not token_data:
-        update.message.reply_text("❌ You are not logged in. Use /login first.")
+# ✅ /setcookie your_sp_dc_here
+@bot.message_handler(commands=["setcookie"])
+def setcookie(message):
+    args = message.text.split(" ", 1)
+    if len(args) != 2:
+        bot.reply_to(message, "❌ Usage:\n/setcookie your_sp_dc_cookie_here")
         return
 
-    access_token = token_data.get("access_token")
-    headers = {"Authorization": f"Bearer {access_token}"}
-    res = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
+    sp_dc = args[1].strip()
+    save_cookie(str(message.chat.id), sp_dc)
+    bot.reply_to(message, "✅ Cookie saved! You can now use /mytrack and /friends.")
 
-    if res.status_code == 204:
-        update.message.reply_text("🛑 Nothing is playing.")
-    elif res.status_code == 429:
-        update.message.reply_text("⚠️ Rate limited. Try again in a few seconds.")
-    else:
-        data = res.json()
-        if not data.get("item"):
-            update.message.reply_text("😕 No track found.")
-            return
-
-        track = data["item"]
-        name = track["name"]
-        artist = track["artists"][0]["name"]
-        url = track["external_urls"]["spotify"]
-        update.message.reply_text(f"🎵 [{name} - {artist}]({url})", parse_mode=ParseMode.MARKDOWN)
-
-def friends(update, context):
-    user_id = update.effective_user.id
+# ✅ /mytrack
+@bot.message_handler(commands=["mytrack"])
+def mytrack(message):
+    user_id = str(message.chat.id)
     sp_dc = get_cookie(user_id)
+
     if not sp_dc:
-        update.message.reply_text("❌ You are not logged in. Use /login and allow cookie access.")
+        bot.reply_to(message, "❌ Please login first using /login.")
         return
 
-    headers = {"cookie": f"sp_dc={sp_dc}"}
-    res = requests.get("https://guc-spclient.spotify.com/presence-view/v1/buddylist", headers=headers)
+    try:
+        headers = {
+            "Cookie": f"sp_dc={sp_dc}",
+            "User-Agent": "Mozilla/5.0"
+        }
+        res = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
+        if res.status_code == 204:
+            bot.reply_to(message, "🔇 Nothing is playing right now.")
+        elif res.status_code == 200:
+            data = res.json()
+            name = data['item']['name']
+            artists = ", ".join([artist['name'] for artist in data['item']['artists']])
+            url = data['item']['external_urls']['spotify']
+            bot.reply_to(message, f"🎵 Now playing:\n*{name}* by *{artists}*\n[Open in Spotify]({url})", parse_mode="Markdown")
+        else:
+            bot.reply_to(message, f"⚠️ Could not fetch track. Status code: {res.status_code}")
+    except Exception as e:
+        bot.reply_to(message, f"❌ Error: {e}")
 
-    if res.status_code != 200:
-        update.message.reply_text("❌ Failed to fetch friends activity.")
+# ✅ /friends (if implemented)
+@bot.message_handler(commands=["friends"])
+def friends(message):
+    user_id = str(message.chat.id)
+    sp_dc = get_cookie(user_id)
+
+    if not sp_dc:
+        bot.reply_to(message, "❌ Please login first using /login.")
         return
 
-    friends = res.json().get("friends")
-    if not friends:
-        update.message.reply_text("👥 No active friends.")
-        return
+    try:
+        headers = {
+            "Cookie": f"sp_dc={sp_dc}",
+            "User-Agent": "Mozilla/5.0"
+        }
+        res = requests.get("https://guc-spclient.spotify.com/presence-view/v1/buddylist", headers=headers)
 
-    msg = "👥 *Friends Activity:*\n"
-    for f in friends:
-        try:
-            name = f["user"]['name']
-            track = f["track"]['name']
-            artist = f["track"]['artist']['name']
-            msg += f"\n{name} → {track} - {artist}"
-        except:
-            continue
-    update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN)
+        if res.status_code == 200:
+            data = res.json()
+            friends = data.get("friends", [])
+            if not friends:
+                bot.reply_to(message, "👥 No friends are listening right now.")
+                return
 
-dp.add_handler(CommandHandler("start", start))
-dp.add_handler(CommandHandler("login", login))
-dp.add_handler(CommandHandler("mytrack", mytrack))
-dp.add_handler(CommandHandler("friends", friends))
+            reply = "🎧 *Friends Listening Activity:*\n"
+            for f in friends:
+                name = f.get("user", {}).get("name", "Unknown")
+                track = f.get("track", {}).get("name", "No Track")
+                artists = ", ".join([a['name'] for a in f.get("track", {}).get("artists", [])])
+                reply += f"\n👉 *{name}* is listening to *{track}* by *{artists}*"
 
-updater.start_polling()
-updater.idle()
+            bot.reply_to(message, reply, parse_mode="Markdown")
+        else:
+            bot.reply_to(message, f"❌ Failed to fetch friends activity. Status: {res.status_code}")
+    except Exception as e:
+        bot.reply_to(message, f"❌ Error: {e}")
+
+# ✅ Bot start
+print("🤖 Bot is running...")
+bot.infinity_polling()
