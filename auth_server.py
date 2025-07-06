@@ -23,6 +23,9 @@ def callback():
         "client_secret": SPOTIFY_CLIENT_SECRET,
     }
 
+    print("Code:", code)
+print("Payload:", payload)
+print("Token Response:", token_data)
     res = requests.post("https://accounts.spotify.com/api/token", data=payload)
     data = res.json()
     print("Spotify Token Response:", data)
