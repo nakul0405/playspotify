@@ -42,3 +42,19 @@ def detect_changes(user_id, new_data):
         json.dump(cache, f)
 
     return changes
+
+def get_my_track(access_token):
+    url = "https://api.spotify.com/v1/me/player/currently-playing"
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+    try:
+        res = requests.get(url, headers=headers)
+        if res.status_code == 200 and res.json().get("item"):
+            item = res.json()["item"]
+            return {
+                "track": item["name"],
+                "artist": item["artists"][0]["name"]
+            }
+    except:
+        return None
