@@ -25,6 +25,7 @@ def callback():
 
     res = requests.post("https://accounts.spotify.com/api/token", data=payload)
     data = res.json()
+    print("Spotify Token Response:", data)
 
     if "access_token" in data:
         save_token(user_id, data)
