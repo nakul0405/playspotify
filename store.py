@@ -14,3 +14,10 @@ def save_cookie(user_id, sp_dc):
 
     with open(COOKIES_FILE, "w") as f:
         json.dump(cookies, f)
+
+def get_cookie(user_id):
+    if os.path.exists(COOKIES_FILE):
+        with open(COOKIES_FILE, "r") as f:
+            cookies = json.load(f)
+            return cookies.get(user_id)
+    return None
