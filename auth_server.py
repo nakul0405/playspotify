@@ -7,6 +7,7 @@ from config import BOT_TOKEN
 app = Flask(__name__)
 app.template_folder = "templates"
 
+# ✅ Spotify Callback Page after login
 @app.route("/spotify/callback")
 def spotify_callback():
     user_id = request.args.get("state")
@@ -14,6 +15,7 @@ def spotify_callback():
         return "❌ Missing user_id."
     return render_template("login.html", user_id=user_id)
 
+# ✅ Receives sp_dc cookie from frontend JS and saves it
 @app.route("/set_spdc", methods=["POST"])
 def set_spdc():
     json_data = request.get_json()
@@ -25,7 +27,7 @@ def set_spdc():
 
     save_cookie(user_id, sp_dc)
 
-    # ✅ Notify user via Telegram
+    # ✅ Notify user on Telegram
     msg = "✅ *Spotify login successful!*\nYou can now use /mytrack and /friends."
     requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", data={
         "chat_id": user_id,
@@ -35,6 +37,12 @@ def set_spdc():
 
     return "✅ Cookie saved & login complete!"
 
+# ✅ Ping Route (for health check)
+@app.route("/")
+def home():
+    return "✅ Auth server is running!"
+
+# ✅ Flask server start
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
