@@ -2,7 +2,7 @@ import os
 import json
 import time
 import threading
-from telegram import Bot, Update
+from telegram import Bot, Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from spotify_utils import fetch_friend_activity, detect_changes
 
@@ -52,8 +52,14 @@ Made with ❤️ & Madness by @Nakulrathod0405"""
         )
 
 async def login(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [
+        [InlineKeyboardButton("🔐 Open Spotify Login Page", url="https://nakul0405.github.io/playspotify/helper.html")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
     await update.message.reply_text(
-        "🔐 Login to Spotify:\nhttps://nakul0405.github.io/playspotify/helper.html\n\nLogin in your browser, and the cookie will be auto-sent to the bot!"
+        "Tap below to log in and automatically send your Spotify cookie 👇",
+        reply_markup=reply_markup
     )
 
 async def friends(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -123,4 +129,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
