@@ -37,21 +37,22 @@
       color: #1DB954;
     }
   </style>
+
   <script>
-    // Telegram app in-app browser workaround
+    // Telegram browser warning
     if (navigator.userAgent.includes("Telegram")) {
-      alert("⚠️ If this page doesn't work properly, open it in your browser (Chrome/Safari) instead of Telegram app.");
+      alert("⚠️ Telegram app browser may not display this page correctly.\n\nTap the three dots ⋮ and choose 'Open in browser' to continue.");
     }
 
     function sendCookie() {
       const match = document.cookie.match(/sp_dc=([^;]+)/);
       if (match) {
         const cookieValue = encodeURIComponent(match[1]);
-        const botUsername = "spotifybyNakul_bot"; // Your actual bot username
+        const botUsername = "spotifybyNakul_bot"; // ✅ Your bot username
         const tgLink = `https://t.me/${botUsername}?start=setcookie_spdc=${cookieValue}`;
         window.open(tgLink, "_blank");
       } else {
-        alert("⚠️ sp_dc cookie not found or else use extension.\n\nPlease log in to Spotify first, then return to this page and try again.");
+        alert("⚠️ sp_dc cookie not found.\n\nPlease log in to Spotify first, then return to this page and try again.");
       }
     }
   </script>
