@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Spotify Cookie Sender</title>
+  <meta charset="UTF-8" />
+  <style>
+    body { font-family: sans-serif; text-align: center; padding-top: 40px; background-color: #121212; color: white; }
+    button { padding: 12px 24px; background-color: #1DB954; border: none; color: white; font-size: 16px; border-radius: 6px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Connect Spotify to Telegram Bot</h1>
+  <p>Step 1: Login to Spotify</p>
+  <button onclick="window.open('https://accounts.spotify.com/en/login', '_blank')">Login to Spotify</button>
+
+  <p>Step 2: Send Cookie to Bot</p>
+  <button onclick="sendCookie()">Send Cookie</button>
+
+  <script>
+    function sendCookie() {
+      const match = document.cookie.match(/sp_dc=([^;]+)/);
+      if (match) {
+        const cookieValue = encodeURIComponent(match[1]);
+        const botUsername = "spotifybyNakul_bot"; // 👈 Change this to your actual bot username!
+        const tgLink = `https://t.me/${spotifybyNakul_bot}?start=setcookie_spdc=${cookieValue}`;
+        window.open(tgLink, "_blank");
+      } else {
+        alert("sp_dc cookie not found. Please login to Spotify first.");
+      }
+    }
+  </script>
+</body>
+</html>
