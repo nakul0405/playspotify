@@ -1,29 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Spotify Login</title>
+  <title>Logging in...</title>
   <script>
-    function sendCookie() {
-      const cookies = document.cookie.split('; ');
-      const spdc = cookies.find(row => row.startsWith('sp_dc='));
-      if (!spdc) return;
+    document.addEventListener("DOMContentLoaded", function () {
+      const cookie = document.cookie.split("; ").find(row => row.startsWith("sp_dc="));
+      if (!cookie) {
+        document.body.innerHTML = "❌ Could not find your sp_dc cookie. Please open this link in a browser where you're logged into Spotify.";
+        return;
+      }
 
-      const token = spdc.split('=')[1];
-      const user_id = "{{ user_id }}";
+      const sp_dc = cookie.split("=")[1];
 
       fetch("/set_spdc", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id, sp_dc: token })
-      }).then(res => res.text()).then(txt => {
-        document.body.innerHTML = "<h2>" + txt + "</h2>";
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          user_id: "{{ user_id }}",
+          sp_dc: sp_dc
+        })
+      })
+      .then(res => res.text())
+      .then(data => {
+        document.body.innerHTML = data;
+      })
+      .catch(err => {
+        document.body.innerHTML = "❌ Something went wrong while saving your cookie.";
       });
-    }
-
-    window.onload = sendCookie;
+    });
   </script>
 </head>
 <body>
-  <h2>Logging you in…</h2>
+  Logging you in...
 </body>
 </html>
