@@ -2,13 +2,25 @@ import os
 import json
 import time
 import threading
-from telegram import Bot, Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram import (
+    Bot,
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    ChatMemberUpdated
+)
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    ContextTypes,
+    ChatMemberHandler
+)
 from spotify_utils import fetch_friend_activity, detect_changes
 
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 cookies_file = "cookies.json"
 
+# --- START Command ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     user_id = str(update.effective_user.id)
@@ -48,9 +60,10 @@ Use any one method to login:
 👥 /friends – Show friends listening activity  
 🚪 /logout – Logout
 
-Made with ❤️ & Madness by @Nakulrathod0405"""
+Made with ❤️ & Madness by @NakulRathod0405"""
         )
 
+# --- LOGIN Command with Button ---
 async def login(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("🔐 Open Spotify Login Page", url="https://nakul0405.github.io/playspotify/helper.html")]
@@ -58,10 +71,11 @@ async def login(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     await update.message.reply_text(
-        "Tap below to log in and automatically send your Spotify cookie (ᴄᴏᴘʏ ʟɪɴᴋ ᴀɴᴅ ᴘᴀꜱᴛᴇ ɪɴ ᴄʜʀᴏᴍᴇ/ꜱᴀꜰᴀʀɪ ɪɴ ᴄᴀꜱᴇ ʟɪɴᴋ ᴅᴏᴇꜱɴ'ᴛ ᴡᴏʀᴋ)👇",
+        "Tap below to log in and automatically send your Spotify cookie 👇",
         reply_markup=reply_markup
     )
 
+# --- FRIENDS Activity ---
 async def friends(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     try:
@@ -79,6 +93,7 @@ async def friends(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text(f"❌ Error: {e}")
 
+# --- SETCOOKIE Manual Command ---
 async def setcookie(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     args = context.args
@@ -101,6 +116,7 @@ async def setcookie(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text("✅ Cookie set successfully! Spotify tracking is now active.")
 
+# --- Auto Notify Thread ---
 def auto_notify(bot: Bot):
     while True:
         try:
@@ -116,6 +132,35 @@ def auto_notify(bot: Bot):
                 bot.send_message(chat_id=user_id, text=msg, parse_mode="Markdown")
         time.sleep(60)
 
+# --- Bot Added to Group Handler ---
+async def welcome_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    member_update = update.chat_member
+    if member_update.new_chat_member.user.id == context.bot.id:
+        old_status = member_update.old_chat_member.status
+        new_status = member_update.new_chat_member.status
+
+        if old_status in ("left", "kicked") and new_status == "administrator":
+            chat_id = member_update.chat.id
+            keyboard = [
+                [
+                    InlineKeyboardButton("🎧 Try the Bot", url="https://t.me/spotifybyNakul_bot"),
+                    InlineKeyboardButton("👤 Developer", url="https://t.me/NakulRathod0405")
+                ]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text=(
+                    "✅ Thanks for making me admin!\n\n"
+                    "I’m *PlaySpotify* — a bot that shows what your friends are listening to, even if Spotify won’t 🕵️‍♂️🎧\n\n"
+                    "Click below to get started 👇"
+                ),
+                reply_markup=reply_markup,
+                parse_mode="Markdown"
+            )
+
+# --- Main Function ---
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
@@ -123,6 +168,7 @@ def main():
     app.add_handler(CommandHandler("login", login))
     app.add_handler(CommandHandler("friends", friends))
     app.add_handler(CommandHandler("setcookie", setcookie))
+    app.add_handler(ChatMemberHandler(welcome_bot, ChatMemberHandler.MY_CHAT_MEMBER))
 
     threading.Thread(target=auto_notify, args=(app.bot,), daemon=True).start()
     app.run_polling()
