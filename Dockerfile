@@ -1,14 +1,11 @@
-# Use official Python image
-FROM python:3.10
+FROM python:3.10-slim
 
-# Set working directory
 WORKDIR /app
 
-# Copy files
 COPY . .
 
-# Install dependencies
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Run bot and auth server
+ENV BOT_TOKEN=your_default_bot_token  # Optional fallback
+
 CMD ["python", "bot.py"]
