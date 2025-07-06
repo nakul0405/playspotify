@@ -24,14 +24,15 @@ def callback():
     }
 
     print("Code:", code)
-print("Payload:", payload)
-print("Token Response:", token_data)
-    res = requests.post("https://accounts.spotify.com/api/token", data=payload)
-    data = res.json()
-    print("Spotify Token Response:", data)
+    print("Payload:", payload)
 
-    if "access_token" in data:
-        save_token(user_id, data)
+    res = requests.post("https://accounts.spotify.com/api/token", data=payload)
+    token_data = res.json()
+
+    print("Token Response:", token_data)
+
+    if "access_token" in token_data:
+        save_token(user_id, token_data)
         return render_template("login.html", user_id=user_id)
     else:
         return "Token exchange failed."
