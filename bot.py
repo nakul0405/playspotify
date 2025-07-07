@@ -39,31 +39,27 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("✅ Login successful! Spotify tracking is now active.")
     else:
         await update.message.reply_text(
-            """👋 🎧 *Welcome to PlaySpotify by Nakul!*
-
-Track what your friends are listening to — even what Spotify won’t show you!
-
-✅ Friends' Live Activity  
-✅ Song Details (Title, Artist, Album, Time)  
-✅ Your Listening Activity  
-✅ Spotify Song Downloader
-
-*Login Options:*
-1. /login – Auto login via browser
-2. /setcookie <sp_dc> – Manual cookie
-
-*Commands:*
-🔐 /login – Login via Spotify  
-🔐 /setcookie <token> – Set cookie manually  
-🎵 /mytrack – Show your current playing track  
-👥 /friends – Show friends listening activity  
-🎧 /download <link or song> – Download any Spotify song  
-🚪 /logout – Logout  
-👋 /hello – Bot intro
-
-𝘔𝘢𝘥𝘦 𝘸𝘪𝘵𝘩 ❤️ & 𝘔𝘢𝘥𝘯𝘦𝘴𝘴 𝘣𝘺 @NakulRathod0405""",
-            parse_mode="Markdown"
-        )
+            text = (
+    "👋 🎧 *Welcome to PlaySpotify by Nakul!*\n\n"
+    "Track what your friends are listening to — even what Spotify won’t show you!\n\n"
+    "✅ Friends' Live Activity\n"
+    "✅ Song Details (Title, Artist, Album, Time)\n"
+    "✅ Your Listening Activity\n"
+    "✅ Spotify Song Downloader\n\n"
+    "*Login Options:*\n"
+    "1. /login – Auto login via browser\n"
+    "2. /setcookie <sp_dc> – Manual cookie\n\n"
+    "*Commands:*\n"
+    "🔐 /login – Login via Spotify\n"
+    "🔐 /setcookie <token> – Set cookie manually\n"
+    "🎵 /mytrack – Show your current playing track\n"
+    "👥 /friends – Show friends listening activity\n"
+    "🎧 /download <link or song> – Download any Spotify song\n"
+    "🚪 /logout – Logout\n"
+    "👋 /hello – Bot intro\n\n"
+    "𝘔𝘢𝘥𝘦 𝘸𝘪𝘵𝘩 ❤️ & 𝘔𝘢𝘥𝘯𝘦𝘴𝘴 𝘣𝘺 @NakulRathod0405"
+)
+await update.message.reply_text(text, parse_mode="Markdown")
 
 # --- LOGIN ---
 async def login(update: Update, context: ContextTypes.DEFAULT_TYPE):
