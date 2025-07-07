@@ -56,8 +56,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "🎧 /download <song or link> – Download Spotify song\n"
             "🚪 /logout – Logout\n"
             "👋 /hello – Bot intro\n\n"
-            "_Made with ❤️ by @NakulRathod0405_",
-            parse_mode="Markdown"
+            " _Made with ❤️ by @NakulRathod0405_ ",
+            parse_mode="MarkdownV2"
         )
 
 # --- LOGIN ---
