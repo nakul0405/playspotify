@@ -7,14 +7,23 @@ from telegram import (
     Update,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
+    InputFile
 )
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
+    MessageHandler,
+    CallbackQueryHandler,
+    ChatMemberHandler,
     ContextTypes,
-    ChatMemberHandler
+    filters
 )
-from spotify_utils import fetch_friend_activity, detect_changes, fetch_user_track
+from spotify_utils import (
+    fetch_friend_activity,
+    detect_changes,
+    fetch_user_track,
+    download_spotify_track
+)
 
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 cookies_file = "cookies.json"
@@ -36,30 +45,31 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("✅ Login successful! Spotify tracking is now active.")
     else:
         await update.message.reply_text(
-            """👋 🎧 Welcome to PlaySpotify by Nakul!
+            """👋 🎧 Welcome to *PlaySpotify* by Nakul!
 
 Track what your friends are listening to — even what Spotify won’t show you!
 
 ✅ Friends' Live Activity  
 ✅ Song Details (Title, Artist, Album, Time)  
 ✅ Your Listening Activity  
-
-To get started, tap below to log in with Spotify 👇
+📥 Song Downloader from Spotify  
 
 Use any one method to login:
 
-1. Use /login to login via Spotify and automatically set your cookie  
-2. Use /setcookie <your sp_dc token> if you want to set cookie manually 🌝
+1. Use /login to login via Spotify  
+2. Use /setcookie <your sp_dc token>  
 
 *Commands:*  
 🔐 /login – Login via Spotify  
 🔐 /setcookie <token> – Set cookie manually  
 🎵 /mytrack – Show your current playing track  
 👥 /friends – Show friends listening activity  
+📥 /download <song name or link> – Download any song  
 🚪 /logout – Logout  
 👋 /hello – Bot intro
 
-𝘔𝘢𝘥𝘦 𝘸𝘪𝘵𝘩 ❤️ & 𝘔𝘢𝘥𝘯𝘦𝘴𝘴 𝘣𝘺 @NakulRathod0405"""
+𝘔𝘢𝘥𝘦 𝘣𝘺 @NakulRathod0405""",
+            parse_mode="Markdown"
         )
 
 # --- LOGIN ---
@@ -69,11 +79,11 @@ async def login(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
-        "Tap below to log in and send your Spotify cookie \n(𝘊𝘰𝘱𝘺 𝘭𝘪𝘯𝘬 𝘢𝘯𝘥 𝘰𝘱𝘦𝘯 𝘪𝘯 𝘊𝘩𝘳𝘰𝘮𝘦/𝘚𝘢𝘧𝘢𝘳𝘪 𝘪𝘧 𝘛𝘦𝘭𝘦𝘨𝘳𝘢𝘮 𝘣𝘳𝘰𝘸𝘴𝘦𝘳 𝘧𝘢𝘪𝘭𝘴) 👇",
+        "Tap below to log in and send your Spotify cookie 👇",
         reply_markup=reply_markup
     )
 
-# --- SETCOOKIE (with validation) ---
+# --- SETCOOKIE ---
 async def setcookie(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     args = context.args
@@ -85,10 +95,7 @@ async def setcookie(update: Update, context: ContextTypes.DEFAULT_TYPE):
     sp_dc = args[0]
 
     try:
-        # Validate cookie
         fetch_friend_activity(sp_dc)
-
-        # Save if valid
         try:
             with open(cookies_file, "r") as f:
                 cookies = json.load(f)
@@ -99,17 +106,9 @@ async def setcookie(update: Update, context: ContextTypes.DEFAULT_TYPE):
         with open(cookies_file, "w") as f:
             json.dump(cookies, f, indent=2)
 
-        await update.message.reply_text("✅ Login successful! Spotify tracking is now active.")
-
+        await update.message.reply_text("✅ Cookie saved. Spotify tracking is now active.")
     except Exception as e:
-        error_text = str(e)
-        if "401" in error_text or "403" in error_text:
-            await update.message.reply_text(
-                "❌ Invalid cookie! Spotify rejected it (Unauthorized).\nMake sure you copied the *sp_dc* cookie correctly.",
-                parse_mode="Markdown"
-            )
-        else:
-            await update.message.reply_text(f"❌ Cookie validation failed:\n`{error_text}`", parse_mode="Markdown")
+        await update.message.reply_text(f"❌ Cookie validation failed:\n`{str(e)}`", parse_mode="Markdown")
 
 # --- FRIENDS ---
 async def friends(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -119,7 +118,7 @@ async def friends(update: Update, context: ContextTypes.DEFAULT_TYPE):
             cookies = json.load(f)
         sp_dc = cookies.get(user_id)
         if not sp_dc:
-            await update.message.reply_text("⚠️ Cookie missing. Use /login or /setcookie first.")
+            await update.message.reply_text("⚠️ Cookie not found. Use /login or /setcookie first.")
             return
         friends = fetch_friend_activity(sp_dc)
         msg = "🎧 Your friends are listening to:\n\n"
@@ -127,9 +126,9 @@ async def friends(update: Update, context: ContextTypes.DEFAULT_TYPE):
             msg += f"• *{f['name']}* → _{f['track']}_ by _{f['artist']}_\n"
         await update.message.reply_text(msg, parse_mode="Markdown")
     except Exception as e:
-        await update.message.reply_text(f"❌ Error: {e}")
+        await update.message.reply_text(f"❌ Error:\n{str(e)}")
 
-# --- MYTRACK ---
+# --- MY TRACK ---
 async def mytrack(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     try:
@@ -137,16 +136,38 @@ async def mytrack(update: Update, context: ContextTypes.DEFAULT_TYPE):
             cookies = json.load(f)
         sp_dc = cookies.get(user_id)
         if not sp_dc:
-            await update.message.reply_text("⚠️ Cookie missing. Use /login or /setcookie first.")
+            await update.message.reply_text("⚠️ Cookie not found. Use /login or /setcookie first.")
             return
-        current = fetch_user_track(sp_dc)
-        if current:
-            msg = f"🎵 You’re listening to:\n*{current['track']}* by *{current['artist']}*"
+        track = fetch_user_track(sp_dc)
+        if track:
+            msg = f"🎵 You are listening to:\n*{track['track']}* by *{track['artist']}*"
         else:
-            msg = "😴 No track found. Maybe you’re not playing anything?"
+            msg = "😴 No active track found."
         await update.message.reply_text(msg, parse_mode="Markdown")
     except Exception as e:
-        await update.message.reply_text(f"❌ Error: {e}")
+        await update.message.reply_text(f"❌ Error:\n{str(e)}")
+
+# --- DOWNLOAD ---
+async def download(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text("⚠️ Please provide a Spotify song name or link.\nUsage: /download <song>")
+        return
+
+    query = " ".join(context.args)
+    msg = await update.message.reply_text("🔍 Searching & Downloading... Please wait ⏳")
+    
+    try:
+        file_path = download_spotify_track(query)
+        if not file_path or not os.path.exists(file_path):
+            await msg.edit_text("❌ Failed to download song.")
+            return
+
+        await update.message.reply_audio(audio=InputFile(file_path), caption="📥 Here's your song!")
+        os.remove(file_path)
+        await msg.delete()
+
+    except Exception as e:
+        await msg.edit_text(f"❌ Error:\n{str(e)}")
 
 # --- LOGOUT ---
 async def logout(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -160,26 +181,34 @@ async def logout(update: Update, context: ContextTypes.DEFAULT_TYPE):
         del cookies[user_id]
         with open(cookies_file, "w") as f:
             json.dump(cookies, f, indent=2)
-        await update.message.reply_text("🚪 You’ve been logged out. Tracking stopped.")
+        await update.message.reply_text("🚪 Logged out successfully.")
     else:
         await update.message.reply_text("⚠️ You’re not logged in yet.")
 
 # --- HELLO ---
 async def hello(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
-        [
-            InlineKeyboardButton("🎧 Try the Bot", url="https://t.me/spotifybyNakul_bot"),
-            InlineKeyboardButton("👤 Developer", url="https://t.me/NakulRathod0405")
-        ]
+        [InlineKeyboardButton("🎧 Try Bot", url="https://t.me/spotifybyNakul_bot"),
+         InlineKeyboardButton("👤 Developer", url="https://t.me/NakulRathod0405")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
-        "✅Hey, I’m *PlaySpotify* —  a Telegram bot that shows what your friends are listening to, even if Spotify won’t. 😎🎧\n\nTap below to try me or talk to my creator 🥶👇",
+        "✅ I’m *PlaySpotify*, the best Spotify activity + downloader bot 🔥",
         reply_markup=reply_markup,
         parse_mode="Markdown"
     )
 
-# --- AUTO NOTIFY THREAD ---
+# --- GROUP ADD HANDLER ---
+async def welcome_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    member = update.chat_member
+    if not member.new_chat_member or member.new_chat_member.user.id != context.bot.id:
+        return
+    chat_id = member.chat.id
+    keyboard = [[InlineKeyboardButton("Try Bot", url="https://t.me/spotifybyNakul_bot")]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await context.bot.send_message(chat_id, "Thanks for adding me! Use /start to begin.", reply_markup=reply_markup)
+
+# --- AUTO NOTIFY ---
 def auto_notify(bot: Bot):
     while True:
         try:
@@ -191,44 +220,17 @@ def auto_notify(bot: Bot):
             try:
                 friends = fetch_friend_activity(sp_dc)
                 changes = detect_changes(user_id, friends)
-                for c in changes:
-                    msg = f"🎵 *{c['name']}* is now listening to:\n*{c['track']}* by *{c['artist']}*"
+                for f in changes:
+                    msg = f"🎧 *{f['name']}* is listening:\n*{f['track']}* by *{f['artist']}*"
                     bot.send_message(chat_id=user_id, text=msg, parse_mode="Markdown")
             except:
                 continue
         time.sleep(60)
 
-# --- GROUP ADD DETECTION ---
-async def welcome_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    member_update = update.chat_member
-    if not member_update or not member_update.new_chat_member:
-        return
-    if member_update.new_chat_member.user.id != context.bot.id:
-        return
-    new_status = member_update.new_chat_member.status
-    if new_status in ("member", "administrator"):
-        chat_id = member_update.chat.id
-        keyboard = [
-            [
-                InlineKeyboardButton("🎧 Try the Bot", url="https://t.me/spotifybyNakul_bot"),
-                InlineKeyboardButton("👤 Developer", url="https://t.me/NakulRathod0405")
-            ]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await context.bot.send_message(
-            chat_id=chat_id,
-            text=(
-                "✅ Thanks for adding me!\n\n"
-                "I’m *PlaySpotify* — I show what your friends are secretly vibing to 🎧😈\n\n"
-                "Start tracking below 👇"
-            ),
-            reply_markup=reply_markup,
-            parse_mode="Markdown"
-        )
-
 # --- MAIN ---
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
+
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("login", login))
     app.add_handler(CommandHandler("setcookie", setcookie))
@@ -236,10 +238,11 @@ def main():
     app.add_handler(CommandHandler("mytrack", mytrack))
     app.add_handler(CommandHandler("logout", logout))
     app.add_handler(CommandHandler("hello", hello))
+    app.add_handler(CommandHandler("download", download))
     app.add_handler(ChatMemberHandler(welcome_bot, ChatMemberHandler.MY_CHAT_MEMBER))
-    
+
     threading.Thread(target=auto_notify, args=(app.bot,), daemon=True).start()
-    print("[BOT] Running polling...")
+    print("✅ Bot is running...")
     app.run_polling()
 
 if __name__ == "__main__":
