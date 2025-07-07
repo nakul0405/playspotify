@@ -12,24 +12,26 @@ def fetch_friend_activity(sp_dc):
         "User-Agent": "Mozilla/5.0"
     }
 
-    try:
-        resp = requests.get("https://open.spotify.com/api/v1/me/friends", headers=headers)
-        data = resp.json()
-        friends = []
+    resp = requests.get("https://open.spotify.com/api/v1/me/friends", headers=headers)
 
-        for f in data.get("friends", []):
-            name = f["user"]["name"]
-            track = f["track"]["name"]
-            artist = f["track"]["artist"]["name"]
-            friends.append({
-                "name": name,
-                "track": track,
-                "artist": artist
-            })
+    # ✅ Strict response code check
+    if resp.status_code != 200:
+        raise Exception(f"Spotify API error: {resp.status_code} - {resp.text}")
 
-        return friends
-    except Exception as e:
-        return []
+    data = resp.json()
+    friends = []
+
+    for f in data.get("friends", []):
+        name = f["user"]["name"]
+        track = f["track"]["name"]
+        artist = f["track"]["artist"]["name"]
+        friends.append({
+            "name": name,
+            "track": track,
+            "artist": artist
+        })
+
+    return friends
 
 # --- DETECT CHANGES ---
 def detect_changes(user_id, latest_friends):
