@@ -1,8 +1,9 @@
 import requests
 import json
 import os
+import subprocess
+import uuid
 
-# Optional: local file to cache friend activity (for auto_notify)
 activity_cache_file = "activity_cache.json"
 
 # --- FRIEND ACTIVITY ---
@@ -10,13 +11,11 @@ def fetch_friend_activity(sp_dc):
     headers = {
         "cookie": f"sp_dc={sp_dc}",
         "User-Agent": "Mozilla/5.0",
-        "app-platform": "WebPlayer",  # 🟢 Spotify needs this header
+        "app-platform": "WebPlayer",
         "accept": "application/json"
     }
 
     resp = requests.get("https://guc-spclient.spotify.com/presence-view/v1/buddylist", headers=headers)
-
-    # ❗ Strict cookie/auth validation
     if resp.status_code != 200:
         raise Exception(f"Spotify API error: {resp.status_code} - {resp.text}")
 
@@ -54,7 +53,6 @@ def detect_changes(user_id, latest_friends):
             if friend not in previous:
                 new_activity.append(friend)
 
-        # Update cache
         cache[user_id] = latest_friends
         with open(activity_cache_file, "w") as f:
             json.dump(cache, f, indent=2)
@@ -73,7 +71,6 @@ def fetch_user_track(sp_dc):
     try:
         resp = requests.get("https://api.spotify.com/v1/me/player", headers=headers)
         data = resp.json()
-
         if "item" not in data or not data["item"]:
             return None
 
@@ -86,3 +83,35 @@ def fetch_user_track(sp_dc):
         }
     except:
         return None
+
+# --- DOWNLOAD TRACK USING spotdl ---
+def download_spotify_track(query):
+    try:
+        # temp folder
+        out_dir = "downloads"
+        os.makedirs(out_dir, exist_ok=True)
+
+        # create unique filename prefix
+        unique = str(uuid.uuid4())[:8]
+        output_template = f"{out_dir}/{unique}.mp3"
+
+        # Run spotdl command
+        command = [
+            "spotdl",
+            query,
+            "--output", output_template,
+            "--format", "mp3",
+            "--lyrics", "no",
+        ]
+
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        
+        # Check if file got created
+        for file in os.listdir(out_dir):
+            if file.endswith(".mp3") and unique in file:
+                return os.path.join(out_dir, file)
+
+        raise Exception("Download failed or file not found.")
+
+    except Exception as e:
+        raise Exception(f"spotdl error: {str(e)}")
