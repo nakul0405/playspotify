@@ -20,45 +20,48 @@ from spotify_utils import fetch_friend_activity, detect_changes, fetch_user_trac
 
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 cookies_file = "cookies.json"
-search_results = {}  # Cache search per user
+search_results = {}
 
 # --- START ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = str(update.effective_user.id)
-    text = update.message.text
-    if text.startswith("/start setcookie_spdc="):
-        cookie = text.split("setcookie_spdc=")[-1]
-        try:
-            with open(cookies_file, "r") as f:
-                cookies = json.load(f)
-        except:
-            cookies = {}
-        cookies[user_id] = cookie
-        with open(cookies_file, "w") as f:
-            json.dump(cookies, f, indent=2)
-        await update.message.reply_text("✅ Login successful! Spotify tracking is now active.")
-    else:
-        message = (
-            "👋 🎧 *Welcome to PlaySpotify by Nakul!*\n\n"
-            "Track what your friends are listening to — even what Spotify won’t show you!\n\n"
-            "✅ Friends' Live Activity\n"
-            "✅ Song Details (Title, Artist, Album, Time)\n"
-            "✅ Your Listening Activity\n"
-            "✅ Spotify Song Downloader\n\n"
-            "*Login Options:*\n"
-            "1. /login – Auto login via browser\n"
-            "2. /setcookie <sp_dc> – Manual cookie\n\n"
-            "*Commands:*\n"
-            "🔐 /login – Login via Spotify\n"
-            "🔐 /setcookie <token> – Set cookie manually\n"
-            "🎵 /mytrack – Show your current playing track\n"
-            "👥 /friends – Show friends listening activity\n"
-            "🎧 /download <link or song> – Download any Spotify song\n"
-            "🚪 /logout – Logout\n"
-            "👋 /hello – Bot intro\n\n"
-            "Made with ❤️ & madness by @NakulRathod0405"
-        )
-        await update.message.reply_text(message, parse_mode="Markdown")
+    try:
+        user_id = str(update.effective_user.id)
+        text = update.message.text
+        if text.startswith("/start setcookie_spdc="):
+            cookie = text.split("setcookie_spdc=")[-1]
+            try:
+                with open(cookies_file, "r") as f:
+                    cookies = json.load(f)
+            except:
+                cookies = {}
+            cookies[user_id] = cookie
+            with open(cookies_file, "w") as f:
+                json.dump(cookies, f, indent=2)
+            await update.message.reply_text("✅ Login successful! Spotify tracking is now active.")
+        else:
+            await update.message.reply_text(
+                "👋 🎧 *Welcome to PlaySpotify by Nakul!*\n\n"
+                "Track what your friends are listening to — even what Spotify won’t show you!\n\n"
+                "✅ Friends' Live Activity\n"
+                "✅ Song Details (Title, Artist, Album, Time)\n"
+                "✅ Your Listening Activity\n"
+                "✅ Spotify Song Downloader\n\n"
+                "*Login Options:*\n"
+                "1. /login – Auto login via browser\n"
+                "2. /setcookie <sp_dc> – Manual cookie\n\n"
+                "*Commands:*\n"
+                "🔐 /login – Login via Spotify\n"
+                "🔐 /setcookie <token> – Set cookie manually\n"
+                "🎵 /mytrack – Show your current playing track\n"
+                "👥 /friends – Show friends listening activity\n"
+                "🎧 /download <link or song> – Download any Spotify song\n"
+                "🚪 /logout – Logout\n"
+                "👋 /hello – Bot intro\n\n"
+                "_Made with ❤️ & madness by @NakulRathod0405_",
+                parse_mode="Markdown"
+            )
+    except Exception as e:
+        await update.message.reply_text(f"❌ Error in /start:\n`{e}`", parse_mode="Markdown")
 
 # --- LOGIN ---
 async def login(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -105,7 +108,7 @@ async def friends(update: Update, context: ContextTypes.DEFAULT_TYPE):
         friends = fetch_friend_activity(sp_dc)
         msg = "🎧 Your friends are listening to:\n\n"
         for f in friends:
-            msg += f"• *{f['name']}* → _{f['track']}_ by _{f['artist']}_\n"
+            msg += f"• *{f['name']}* → _{f['track']}_ by _{f['artist']}*_\n"
         await update.message.reply_text(msg, parse_mode="Markdown")
     except Exception as e:
         await update.message.reply_text(f"❌ Error: {e}")
@@ -138,7 +141,10 @@ async def download(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     await update.message.reply_text("🔍 Searching songs...")
     try:
-        subprocess.run(["spotdl", "search", query, "--save-file", "search.json"], capture_output=True)
+        result = subprocess.run(
+            ["spotdl", "search", query, "--save-file", "search.json"],
+            capture_output=True, text=True
+        )
         with open("search.json", "r") as f:
             data = json.load(f)
         songs = data.get("songs", [])[:5]
@@ -150,7 +156,10 @@ async def download(update: Update, context: ContextTypes.DEFAULT_TYPE):
         for idx, song in enumerate(songs):
             name = f"{song['name']} - {song['artists'][0]['name']}"
             keyboard.append([InlineKeyboardButton(name, callback_data=f"select_{idx}")])
-        await update.message.reply_text("🎵 Select a song to download:", reply_markup=InlineKeyboardMarkup(keyboard))
+        await update.message.reply_text(
+            "🎵 Select a song to download:",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
     except Exception as e:
         await update.message.reply_text(f"❌ Search failed:\n`{e}`", parse_mode="Markdown")
 
@@ -274,4 +283,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
