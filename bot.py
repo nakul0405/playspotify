@@ -38,28 +38,27 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             json.dump(cookies, f, indent=2)
         await update.message.reply_text("✅ Login successful! Spotify tracking is now active.")
     else:
-        await update.message.reply_text(
-            text = (
-    "👋 🎧 *Welcome to PlaySpotify by Nakul!*\n\n"
-    "Track what your friends are listening to — even what Spotify won’t show you!\n\n"
-    "✅ Friends' Live Activity\n"
-    "✅ Song Details (Title, Artist, Album, Time)\n"
-    "✅ Your Listening Activity\n"
-    "✅ Spotify Song Downloader\n\n"
-    "*Login Options:*\n"
-    "1. /login – Auto login via browser\n"
-    "2. /setcookie <sp_dc> – Manual cookie\n\n"
-    "*Commands:*\n"
-    "🔐 /login – Login via Spotify\n"
-    "🔐 /setcookie <token> – Set cookie manually\n"
-    "🎵 /mytrack – Show your current playing track\n"
-    "👥 /friends – Show friends listening activity\n"
-    "🎧 /download <link or song> – Download any Spotify song\n"
-    "🚪 /logout – Logout\n"
-    "👋 /hello – Bot intro\n\n"
-    "𝘔𝘢𝘥𝘦 𝘸𝘪𝘵𝘩 ❤️ & 𝘔𝘢𝘥𝘯𝘦𝘴𝘴 𝘣𝘺 @NakulRathod0405"
-)
-await update.message.reply_text(text, parse_mode="Markdown")
+        message = (
+            "👋 🎧 *Welcome to PlaySpotify by Nakul!*\n\n"
+            "Track what your friends are listening to — even what Spotify won’t show you!\n\n"
+            "✅ Friends' Live Activity\n"
+            "✅ Song Details (Title, Artist, Album, Time)\n"
+            "✅ Your Listening Activity\n"
+            "✅ Spotify Song Downloader\n\n"
+            "*Login Options:*\n"
+            "1. /login – Auto login via browser\n"
+            "2. /setcookie <sp_dc> – Manual cookie\n\n"
+            "*Commands:*\n"
+            "🔐 /login – Login via Spotify\n"
+            "🔐 /setcookie <token> – Set cookie manually\n"
+            "🎵 /mytrack – Show your current playing track\n"
+            "👥 /friends – Show friends listening activity\n"
+            "🎧 /download <link or song> – Download any Spotify song\n"
+            "🚪 /logout – Logout\n"
+            "👋 /hello – Bot intro\n\n"
+            "Made with ❤️ & madness by @NakulRathod0405"
+        )
+        await update.message.reply_text(message, parse_mode="Markdown")
 
 # --- LOGIN ---
 async def login(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -106,7 +105,7 @@ async def friends(update: Update, context: ContextTypes.DEFAULT_TYPE):
         friends = fetch_friend_activity(sp_dc)
         msg = "🎧 Your friends are listening to:\n\n"
         for f in friends:
-            msg += f"• *{f['name']}* → _{f['track']}_ by _{f['artist']}*_\n"
+            msg += f"• *{f['name']}* → _{f['track']}_ by _{f['artist']}_\n"
         await update.message.reply_text(msg, parse_mode="Markdown")
     except Exception as e:
         await update.message.reply_text(f"❌ Error: {e}")
@@ -139,10 +138,7 @@ async def download(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     await update.message.reply_text("🔍 Searching songs...")
     try:
-        result = subprocess.run(
-            ["spotdl", "search", query, "--save-file", "search.json"],
-            capture_output=True, text=True
-        )
+        subprocess.run(["spotdl", "search", query, "--save-file", "search.json"], capture_output=True)
         with open("search.json", "r") as f:
             data = json.load(f)
         songs = data.get("songs", [])[:5]
@@ -154,10 +150,7 @@ async def download(update: Update, context: ContextTypes.DEFAULT_TYPE):
         for idx, song in enumerate(songs):
             name = f"{song['name']} - {song['artists'][0]['name']}"
             keyboard.append([InlineKeyboardButton(name, callback_data=f"select_{idx}")])
-        await update.message.reply_text(
-            "🎵 Select a song to download:",
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+        await update.message.reply_text("🎵 Select a song to download:", reply_markup=InlineKeyboardMarkup(keyboard))
     except Exception as e:
         await update.message.reply_text(f"❌ Search failed:\n`{e}`", parse_mode="Markdown")
 
@@ -274,10 +267,4 @@ def main():
     app.add_handler(CommandHandler("hello", hello))
     app.add_handler(CommandHandler("download", download))
     app.add_handler(CallbackQueryHandler(handle_selection))
-    app.add_handler(ChatMemberHandler(welcome_bot, ChatMemberHandler.MY_CHAT_MEMBER))
-    threading.Thread(target=auto_notify, args=(app.bot,), daemon=True).start()
-    print("🚀 Bot is running...")
-    app.run_polling()
-
-if __name__ == "__main__":
-    main()
+    app.add_handler(ChatMembe_
