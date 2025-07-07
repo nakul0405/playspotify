@@ -53,13 +53,13 @@ Track what your friends are listening to — even what Spotify won’t show you!
 2. /setcookie <sp_dc> – Manual cookie
 
 *Commands:*
-🔐 /login – Login via Spotify\n"  
-🔐 /setcookie <token> – Set cookie manually\n"  
-🎵 /mytrack – Show your current playing track\n"  
-👥 /friends – Show friends listening activity\n"  
-🎧 /download <link or song> – Download any Spotify song\n"  
-🚪 /logout – Logout\n"  
-👋 /hello – Bot intro\n\n"
+🔐 /login – Login via Spotify  
+🔐 /setcookie <token> – Set cookie manually  
+🎵 /mytrack – Show your current playing track  
+👥 /friends – Show friends listening activity  
+🎧 /download <link or song> – Download any Spotify song  
+🚪 /logout – Logout  
+👋 /hello – Bot intro
 
 𝘔𝘢𝘥𝘦 𝘸𝘪𝘵𝘩 ❤️ & 𝘔𝘢𝘥𝘯𝘦𝘴𝘴 𝘣𝘺 @NakulRathod0405""",
             parse_mode="Markdown"
