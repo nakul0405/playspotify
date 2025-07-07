@@ -9,27 +9,32 @@ activity_cache_file = "activity_cache.json"
 def fetch_friend_activity(sp_dc):
     headers = {
         "cookie": f"sp_dc={sp_dc}",
-        "User-Agent": "Mozilla/5.0"
+        "User-Agent": "Mozilla/5.0",
+        "app-platform": "WebPlayer",  # 🟢 Spotify needs this header
+        "accept": "application/json"
     }
 
-    resp = requests.get("https://open.spotify.com/api/v1/me/friends", headers=headers)
+    resp = requests.get("https://guc-spclient.spotify.com/presence-view/v1/buddylist", headers=headers)
 
-    # ✅ Strict response code check
+    # ❗ Strict cookie/auth validation
     if resp.status_code != 200:
         raise Exception(f"Spotify API error: {resp.status_code} - {resp.text}")
 
     data = resp.json()
     friends = []
 
-    for f in data.get("friends", []):
-        name = f["user"]["name"]
-        track = f["track"]["name"]
-        artist = f["track"]["artist"]["name"]
-        friends.append({
-            "name": name,
-            "track": track,
-            "artist": artist
-        })
+    for username, f in data.get("buddylist", {}).items():
+        try:
+            name = f["user"]["name"]
+            track = f["track"]["name"]
+            artist = f["track"]["artist"]["name"]
+            friends.append({
+                "name": name,
+                "track": track,
+                "artist": artist
+            })
+        except:
+            continue
 
     return friends
 
