@@ -267,4 +267,11 @@ def main():
     app.add_handler(CommandHandler("hello", hello))
     app.add_handler(CommandHandler("download", download))
     app.add_handler(CallbackQueryHandler(handle_selection))
-    app.add_handler(ChatMembe_
+    app.add_handler(ChatMemberHandler(welcome_bot, ChatMemberHandler.MY_CHAT_MEMBER))
+    threading.Thread(target=auto_notify, args=(app.bot,), daemon=True).start()
+    print("🚀 Bot is running...")
+    app.run_polling()
+
+if __name__ == "__main__":
+    main()
+    
