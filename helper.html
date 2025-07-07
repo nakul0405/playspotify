@@ -2,14 +2,14 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Spotify Cookie Sender</title>
+  <title>Spotify Cookie Grabber</title>
   <style>
     body {
       font-family: sans-serif;
-      text-align: center;
-      padding-top: 40px;
       background-color: #121212;
       color: white;
+      text-align: center;
+      padding: 40px;
     }
     button {
       padding: 12px 24px;
@@ -21,52 +21,53 @@
       cursor: pointer;
       margin: 10px;
     }
-    .fallback {
-      margin-top: 30px;
-      border-top: 1px solid #444;
-      padding-top: 20px;
-      color: #ccc;
-      max-width: 450px;
-      margin-left: auto;
-      margin-right: auto;
+    #result {
+      margin-top: 20px;
+      font-size: 15px;
+      color: #1DB954;
+      word-break: break-all;
+      background: #222;
+      padding: 10px;
+      border-radius: 5px;
     }
     code {
-      background: #2a2a2a;
-      padding: 3px 6px;
-      border-radius: 4px;
+      background: #222;
       color: #1DB954;
+      padding: 2px 4px;
+      border-radius: 4px;
     }
   </style>
-
-  <script>
-    // Telegram browser warning
-    if (navigator.userAgent.includes("Telegram")) {
-      alert("⚠️ Telegram app browser may not display this page correctly.\n\nTap the three dots ⋮ and choose 'Open in browser' to continue.");
-    }
-
-    function sendCookie() {
-      const match = document.cookie.match(/sp_dc=([^;]+)/);
-      if (match) {
-        const cookieValue = encodeURIComponent(match[1]);
-        const botUsername = "spotifybyNakul_bot"; // ✅ Your bot username
-        const tgLink = `https://t.me/${botUsername}?start=setcookie_spdc=${cookieValue}`;
-        window.open(tgLink, "_blank");
-      } else {
-        alert("⚠️ sp_dc cookie not found.\n\nPlease log in to Spotify first, then return to this page and try again.");
-      }
-    }
-  </script>
 </head>
 <body>
-  <h1>🔐 Connect Spotify to Telegram Bot</h1>
+  <h1>🎧 Get your <code>sp_dc</code> Cookie</h1>
 
-  <p><strong>Step 1:</strong> Login to Spotify</p>
+  <p>1. Login to <strong>spotify.com</strong> below</p>
   <button onclick="window.open('https://accounts.spotify.com/en/login', '_blank')">
     Login to Spotify
   </button>
 
-  <p><strong>Step 2:</strong> Send Cookie to Bot</p>
-  <button onclick="sendCookie()">Send Cookie</button>
+  <p>2. Return here and click below</p>
+  <button onclick="getCookie()">Show My Cookie</button>
+
+  <div id="result">⬆️ Click above after login to reveal your <code>sp_dc</code> cookie here.</div>
+
+  <script>
+    function getCookie() {
+      const match = document.cookie.match(/sp_dc=([^;]+)/);
+      const resultDiv = document.getElementById("result");
+      if (match) {
+        resultDiv.innerHTML = `
+          ✅ Copy the cookie below and send it to the bot:<br><br>
+          <code>/setcookie ${match[1]}</code>
+        `;
+      } else {
+        resultDiv.innerHTML = `
+          ❌ <strong>sp_dc cookie not found</strong><br>
+          Make sure you're logged into <a href="https://spotify.com" target="_blank">Spotify.com</a> in this browser.
+        `;
+      }
+    }
+  </script>
 
   <div class="fallback">
     <h3>❓ Having trouble?</h3>
