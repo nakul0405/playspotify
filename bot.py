@@ -7,7 +7,6 @@ from telegram import (
     Update,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
-    ChatMemberUpdated
 )
 from telegram.ext import (
     ApplicationBuilder,
@@ -60,7 +59,7 @@ Use any one method to login:
 🚪 /logout – Logout  
 👋 /hello – Bot intro
 
-𝘔𝘢𝘥𝘦 𝘸𝘪𝘵𝘩 ❤️ & 𝘔𝘢𝘥𝘯𝘦𝘴𝘴 𝘣𝘺 @Nakulrathod0405"""
+𝘔𝘢𝘥𝘦 𝘸𝘪𝘵𝘩 ❤️ & 𝘔𝘢𝘥𝘯𝘦𝘴𝘴 𝘣𝘺 @NakulRathod0405"""
         )
 
 # --- LOGIN ---
@@ -70,27 +69,47 @@ async def login(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
-        "Tap below to log in and send your Spotify cookie \n(𝘊𝘰𝘱𝘺 𝘭𝘪𝘯𝘬 𝘢𝘯𝘥 𝘰𝘱𝘦𝘯 𝘪𝘯 𝘊𝘩𝘳𝘰𝘮𝘦/𝘚𝘢𝘧𝘢𝘳𝘪 𝘪𝘯𝘤𝘢𝘴𝘦 𝘭𝘪𝘯𝘬 𝘥𝘰𝘦𝘴𝘯’𝘵 𝘸𝘰𝘳𝘬 𝘪𝘯 𝘵𝘦𝘭𝘦𝘨𝘳𝘢𝘮 𝘣𝘳𝘰𝘸𝘴𝘦𝘳)👇",
+        "Tap below to log in and send your Spotify cookie \n(𝘊𝘰𝘱𝘺 𝘭𝘪𝘯𝘬 𝘢𝘯𝘥 𝘰𝘱𝘦𝘯 𝘪𝘯 𝘊𝘩𝘳𝘰𝘮𝘦/𝘚𝘢𝘧𝘢𝘳𝘪 𝘪𝘧 𝘛𝘦𝘭𝘦𝘨𝘳𝘢𝘮 𝘣𝘳𝘰𝘸𝘴𝘦𝘳 𝘧𝘢𝘪𝘭𝘴) 👇",
         reply_markup=reply_markup
     )
 
-# --- SETCOOKIE ---
+# --- SETCOOKIE (with validation) ---
 async def setcookie(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     args = context.args
+
     if not args:
         await update.message.reply_text("⚠️ Send your sp_dc cookie like this:\n/setcookie abc123xyz")
         return
+
     sp_dc = args[0]
+
     try:
-        with open(cookies_file, "r") as f:
-            cookies = json.load(f)
-    except:
-        cookies = {}
-    cookies[user_id] = sp_dc
-    with open(cookies_file, "w") as f:
-        json.dump(cookies, f, indent=2)
-    await update.message.reply_text("✅ Cookie set! Tracking activated.")
+        # Validate cookie
+        fetch_friend_activity(sp_dc)
+
+        # Save if valid
+        try:
+            with open(cookies_file, "r") as f:
+                cookies = json.load(f)
+        except:
+            cookies = {}
+
+        cookies[user_id] = sp_dc
+        with open(cookies_file, "w") as f:
+            json.dump(cookies, f, indent=2)
+
+        await update.message.reply_text("✅ Login successful! Spotify tracking is now active.")
+
+    except Exception as e:
+        error_text = str(e)
+        if "401" in error_text or "403" in error_text:
+            await update.message.reply_text(
+                "❌ Invalid cookie! Spotify rejected it (Unauthorized).\nMake sure you copied the *sp_dc* cookie correctly.",
+                parse_mode="Markdown"
+            )
+        else:
+            await update.message.reply_text(f"❌ Cookie validation failed:\n`{error_text}`", parse_mode="Markdown")
 
 # --- FRIENDS ---
 async def friends(update: Update, context: ContextTypes.DEFAULT_TYPE):
