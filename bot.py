@@ -39,7 +39,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("✅ Login successful! Spotify tracking is now active.")
     else:
         welcome_text = (
-            "<b>👋 🎧 Welcome to PlaySpotify by Nakul!</b>\n\n"
+            "<b>🎧 Welcome to PlaySpotify by Nakul!</b>\n\n"
             "Track what your friends are listening to — even what Spotify won’t show you!\n\n"
             "✅ Friends' Live Activity\n"
             "✅ Song Details (Title, Artist, Album, Time)\n"
