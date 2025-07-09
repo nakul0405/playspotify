@@ -1,117 +1,84 @@
 import requests
-import json
-import os
-import subprocess
-import uuid
+import time
+import hmac
+import hashlib
+import base64
 
-activity_cache_file = "activity_cache.json"
+# Step 1: Get server time from Spotify
+def get_server_time():
+    r = requests.get("https://open.spotify.com/server-time")
+    return r.json()["serverTime"]
 
-# --- FRIEND ACTIVITY ---
-def fetch_friend_activity(sp_dc):
+# Step 2: Generate TOTP based on Spotify's hardcoded secret
+def generate_totp(secret: bytes, interval=30, digits=6, digest=hashlib.sha1):
+    counter = int(time.time()) // interval
+    counter_bytes = counter.to_bytes(8, byteorder='big')
+    hmac_digest = hmac.new(secret, counter_bytes, digest).digest()
+    offset = hmac_digest[-1] & 0x0F
+    code = (int.from_bytes(hmac_digest[offset:offset+4], byteorder='big') & 0x7FFFFFFF) % (10 ** digits)
+    return str(code).zfill(digits)
+
+# Step 3: Get access token from sp_dc
+def get_access_token(sp_dc):
+    base32_secret = "GU2TANZRGQ2TQNJTGQ4DONBZHE2TSMRSGQ4DMMZQGMZDSMZUG4"
+    secret = base64.b32decode(base32_secret, casefold=True)
+
+    server_time = get_server_time()
+    totp = generate_totp(secret)
+    ts = int(time.time())
+
+    url = f"https://open.spotify.com/get_access_token?reason=transport&productType=web-player&totp={totp}&totpServer={ts}&totpVer=5&sTime={server_time}&cTime={server_time}"
     headers = {
-        "cookie": f"sp_dc={sp_dc}",
-        "User-Agent": "Mozilla/5.0",
-        "app-platform": "WebPlayer",
-        "accept": "application/json"
-    }
-
-    resp = requests.get("https://guc-spclient.spotify.com/presence-view/v1/buddylist", headers=headers)
-    if resp.status_code != 200:
-        raise Exception(f"Spotify API error: {resp.status_code} - {resp.text}")
-
-    data = resp.json()
-    friends = []
-
-    for username, f in data.get("buddylist", {}).items():
-        try:
-            name = f["user"]["name"]
-            track = f["track"]["name"]
-            artist = f["track"]["artist"]["name"]
-            friends.append({
-                "name": name,
-                "track": track,
-                "artist": artist
-            })
-        except:
-            continue
-
-    return friends
-
-# --- DETECT CHANGES ---
-def detect_changes(user_id, latest_friends):
-    try:
-        if os.path.exists(activity_cache_file):
-            with open(activity_cache_file, "r") as f:
-                cache = json.load(f)
-        else:
-            cache = {}
-
-        previous = cache.get(user_id, [])
-        new_activity = []
-
-        for friend in latest_friends:
-            if friend not in previous:
-                new_activity.append(friend)
-
-        cache[user_id] = latest_friends
-        with open(activity_cache_file, "w") as f:
-            json.dump(cache, f, indent=2)
-
-        return new_activity
-    except:
-        return []
-
-# --- MY TRACK FETCHER ---
-def fetch_user_track(sp_dc):
-    headers = {
-        "cookie": f"sp_dc={sp_dc}",
+        "Cookie": f"sp_dc={sp_dc}",
         "User-Agent": "Mozilla/5.0"
     }
 
-    try:
-        resp = requests.get("https://api.spotify.com/v1/me/player", headers=headers)
-        data = resp.json()
-        if "item" not in data or not data["item"]:
-            return None
-
-        track_name = data["item"]["name"]
-        artist_name = data["item"]["artists"][0]["name"]
-
-        return {
-            "track": track_name,
-            "artist": artist_name
-        }
-    except:
+    res = requests.get(url, headers=headers)
+    if res.status_code == 200:
+        return res.json()["accessToken"]
+    else:
+        print("❌ Error getting access token:", res.text)
         return None
 
-# --- DOWNLOAD TRACK USING spotdl ---
-def download_spotify_track(query):
-    try:
-        # temp folder
-        out_dir = "downloads"
-        os.makedirs(out_dir, exist_ok=True)
+# Step 4: Fetch friends' activity
+def get_friends_activity(sp_dc):
+    token = get_access_token(sp_dc)
+    if not token:
+        return None
 
-        # create unique filename prefix
-        unique = str(uuid.uuid4())[:8]
-        output_template = f"{out_dir}/{unique}.mp3"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "User-Agent": "Mozilla/5.0"
+    }
 
-        # Run spotdl command
-        command = [
-            "spotdl",
-            query,
-            "--output", output_template,
-            "--format", "mp3",
-            "--lyrics", "no",
-        ]
+    url = "https://spclient.wg.spotify.com/presence-view/v1/buddylist"
+    r = requests.get(url, headers=headers)
 
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        
-        # Check if file got created
-        for file in os.listdir(out_dir):
-            if file.endswith(".mp3") and unique in file:
-                return os.path.join(out_dir, file)
+    if r.status_code == 200:
+        return r.json()
+    else:
+        print("❌ Error getting friends activity:", r.text)
+        return None
 
-        raise Exception("Download failed or file not found.")
+# Step 5: Get current playing track of the user
+def get_my_track(access_token):
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "User-Agent": "Mozilla/5.0"
+    }
 
-    except Exception as e:
-        raise Exception(f"spotdl error: {str(e)}")
+    resp = requests.get("https://api.spotify.com/v1/me/player", headers=headers)
+    if resp.status_code != 200:
+        return None
+
+    data = resp.json()
+    if "item" not in data or not data["item"]:
+        return None
+
+    track_name = data["item"]["name"]
+    artist_name = data["item"]["artists"][0]["name"]
+
+    return {
+        "track": track_name,
+        "artist": artist_name
+    }
