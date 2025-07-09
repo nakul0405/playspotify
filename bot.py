@@ -15,8 +15,7 @@ from telegram.ext import (
     CallbackQueryHandler,
     ContextTypes,
 )
-from friends import fetch_friend_activity
-from spotify_utils import detect_changes, get_my_track
+from spotify_utils import fetch_friend_activity, detect_changes, fetch_user_track
 
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 cookies_file = "cookies.json"
