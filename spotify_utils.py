@@ -9,11 +9,28 @@ activity_cache_file = "activity_cache.json"
 
 # --- FRIEND ACTIVITY ---
 def fetch_friend_activity(sp_dc):
+    # Step 1: Get access token using sp_dc
+    token_url = "https://open.spotify.com/get_access_token?reason=transport&productType=web_player"
+    headers_token = {
+        "Cookie": f"sp_dc={sp_dc}",
+        "User-Agent": "Mozilla/5.0"
+    }
+
+    token_resp = requests.get(token_url, headers=headers_token)
+    if token_resp.status_code != 200:
+        raise Exception(f"Spotify token fetch error: {token_resp.status_code} - {token_resp.text}")
+
+    token_data = token_resp.json()
+    access_token = token_data.get("accessToken")
+    if not access_token:
+        raise Exception("No access token in response.")
+
+    # Step 2: Use token to fetch friends activity
     headers = {
-        "cookie": f"sp_dc={sp_dc}",
+        "Authorization": f"Bearer {access_token}",
         "User-Agent": "Mozilla/5.0",
-        "app-platform": "WebPlayer",
-        "accept": "application/json"
+        "App-Platform": "WebPlayer",
+        "Accept": "application/json"
     }
 
     resp = requests.get("https://guc-spclient.spotify.com/presence-view/v1/buddylist", headers=headers)
